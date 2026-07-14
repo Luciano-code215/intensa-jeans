@@ -48,10 +48,12 @@ class TiendaSeeder extends Seeder
             'nombre' => 'Mom Jean Clásico Celeste',
             'descripcion' => 'Jean rígido tiro alto, calce mom tradicional. 100% algodón.',
             'precio' => 30000.00,
-            'porc_desc' => 10, // El boot calculará el precio_final automáticamente
-            'precio_final' => 27000.00,
+            'porc_desc_ef' => 10, // El boot calculará el precio_final automáticamente
+            'precio_ef' => 27000.00,
             'url_imagen' => 'https://images.unsplash.com/photo-1604176354204-9268737828e4?q=80&w=500',
             'categoria_id' => $catPantalon->id,
+            'liquidacion' => true,
+            'porc_liquidacion' => 20,
             'activo' => true,
         ]);
 
@@ -59,8 +61,8 @@ class TiendaSeeder extends Seeder
             'nombre' => 'Wide Leg Nevado Premium',
             'descripcion' => 'Jean wide leg tiro alto, proceso de lavado nevado intenso.',
             'precio' => 35000.00,
-            'porc_desc' => 0,
-            'precio_final' => 35000.00,
+            'porc_desc_ef' => 0,
+            'precio_ef' => 35000.00,
             'url_imagen' => 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=500',
             'categoria_id' => $catPantalon->id,
             'activo' => true,
@@ -70,8 +72,8 @@ class TiendaSeeder extends Seeder
             'nombre' => 'Short Denim Deshilachado',
             'descripcion' => 'Short de jean tiro alto con roturas y flecos en botamanga.',
             'precio' => 22000.00,
-            'porc_desc' => 0,
-            'precio_final' => 22000.00,
+            'porc_desc_ef' => 0,
+            'precio_ef' => 22000.00,
             'url_imagen' => 'https://images.unsplash.com/photo-1475184634737-a62e88213b3d?q=80&w=500',
             'categoria_id' => $catShort->id,
             'activo' => true,
@@ -81,8 +83,8 @@ class TiendaSeeder extends Seeder
             'nombre' => 'Cinto Cuero Hebilla Oro',
             'descripcion' => 'Cinto 100% cuero vacuno con hebilla guesa dorada.',
             'precio' => 8500.00,
-            'porc_desc' => 0,
-            'precio_final' => 8500.00,
+            'porc_desc_ef' => 0,
+            'precio_ef' => 8500.00,
             'url_imagen' => null, // Para probar cuando no hay foto
             'categoria_id' => $catAccesorio->id,
             'activo' => true,

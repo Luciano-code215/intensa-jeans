@@ -95,21 +95,106 @@
                             </div>
                         </div>
 
-                        <div class="row g-3 mb-0">
-                            <!-- Precio -->
-                            <div class="col-12 col-sm-6">
-                                <label class="form-label fw-bold text-dark mb-1">Precio Unitario ($)</label>
-                                <input type="number" class="form-control rounded-3 py-2" placeholder="38500" name="precio"
-                                    min="0" required>
+                        <div class="row g-3 mb-4">
+                            {{-- Campo: Precio de Lista --}}
+                            <div class="col-md-4">
+                                <label for="precio" class="form-label fw-bold" style="color: #1a3352;">Precio de Lista
+                                    ($)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" name="precio" id="precio"
+                                        class="form-control @error('precio') is-invalid @enderror"
+                                        value="{{ old('precio') }}" step="0.01" min="0" required
+                                        placeholder="Ej: 15000">
+                                    @error('precio')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <small class="text-muted d-block">El precio de venta normal del producto.</small>
                             </div>
 
-                            <!-- Porcentaje de Descuento -->
-                            <div class="col-12 col-sm-6">
-                                <label class="form-label fw-bold text-dark mb-1">Porcentaje Descuento (%)</label>
-                                <input type="number" class="form-control rounded-3 py-2" placeholder="0" value="0"
-                                    name="porcentaje_descuento" min="0" max="100">
+                            {{-- Campo: % Descuento Efectivo --}}
+                            <div class="col-md-4">
+                                <label for="porc_desc_ef" class="form-label fw-bold" style="color: #1a3352;">% Descuento
+                                    Efectivo / Transferencia</label>
+                                <div class="input-group">
+                                    <input type="number" name="porc_desc_ef" id="porc_desc_ef"
+                                        class="form-control @error('porc_desc_ef') is-invalid @enderror"
+                                        value="{{ old('porc_desc_ef', 0) }}" min="0" max="100"
+                                        placeholder="Ej: 10">
+                                    <span class="input-group-text">%</span>
+                                    @error('porc_desc_ef')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <small class="text-muted d-block">Se aplica sobre el precio (o sobre el precio
+                                    liquidado).</small>
+
+                                {{-- SIMULACIÓN PRECIO EFECTIVO --}}
+                                <div class="mt-2" id="preview-efectivo-box" style="display: none;">
+                                    <span
+                                        class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1.5 rounded w-100 text-start">
+                                        <i class="bi bi-wallet2 me-1"></i> Simulación Efectivo: <strong
+                                            id="simulacion-efectivo">$0</strong>
+                                    </span>
+                                </div>
                             </div>
                         </div>
+
+                        <hr class="text-muted my-4">
+
+                        {{-- SECCIÓN: LIQUIDACIÓN --}}
+                        <div class="card border-warning bg-light-subtle mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title fw-bold text-warning-emphasis d-flex align-items-center gap-2 mb-3">
+                                    <i class="bi bi-fire text-danger"></i> Configuración de Liquidación
+                                </h5>
+
+                                <div class="row align-items-center g-3">
+                                    {{-- Switch: ¿Está en liquidación? --}}
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch fs-5">
+                                            <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
+                                                id="liquidacion" name="liquidacion" value="1"
+                                                {{ old('liquidacion') ? 'checked' : '' }}>
+                                            <label class="form-check-label fw-semibold cursor-pointer" for="liquidacion"
+                                                style="color: #1a3352; font-size: 1rem;">
+                                                Activar Liquidación para este producto
+                                            </label>
+                                        </div>
+                                        <small class="text-muted d-block mt-1">Al activarse, se mostrará un cartel de
+                                            "LIQUIDACIÓN" en la tienda y el precio de lista bajará.</small>
+                                    </div>
+
+                                    {{-- Campo: % Descuento Liquidación (Habilitado solo si el switch está ON) --}}
+                                    <div class="col-md-6" id="wrapper-porc-liquidacion">
+                                        <label for="porc_liquidacion" class="form-label fw-bold"
+                                            style="color: #1a3352;">% Descuento de Liquidación</label>
+                                        <div class="input-group">
+                                            <input type="number" name="porc_liquidacion" id="porc_liquidacion"
+                                                class="form-control @error('porc_liquidacion') is-invalid @enderror"
+                                                value="{{ old('porc_liquidacion', 0) }}" min="0" max="100"
+                                                placeholder="Ej: 20" disabled>
+                                            <span class="input-group-text">%</span>
+                                            @error('porc_liquidacion')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                        <small class="text-muted d-block">Este porcentaje se descuenta directamente del
+                                            Precio de Lista original.</small>
+
+                                        {{-- SIMULACIÓN PRECIO LIQUIDACIÓN --}}
+                                        <div class="mt-2" id="preview-liquidacion-box" style="display: none;">
+                                            <span
+                                                class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1.5 rounded w-100 text-start">
+                                                <i class="bi bi-tag-fill me-1"></i> Simulación Lista Liquidación: <strong
+                                                    id="simulacion-liquidacion">$0</strong>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>>
                     </div>
 
                     {{-- Bloque 2: SELECCIÓN DE TALLES Y STOCK INDIVIDUAL CON MODAL --}}
@@ -252,6 +337,86 @@
                 };
                 reader.readAsDataURL(archivo);
             });
+        });
+
+        //simulacion de precios y descuentos, bloqueador de liquidacion
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const inputPrecio = document.getElementById('precio');
+            const inputPorcDescEf = document.getElementById('porc_desc_ef');
+            const switchLiquidacion = document.getElementById('liquidacion');
+            const inputPorcLiquidacion = document.getElementById('porc_liquidacion');
+
+            // Elementos de simulación
+            const previewEfectivoBox = document.getElementById('preview-efectivo-box');
+            const textSimulacionEfectivo = document.getElementById('simulacion-efectivo');
+            const previewLiquidacionBox = document.getElementById('preview-liquidacion-box');
+            const textSimulacionLiquidacion = document.getElementById('simulacion-liquidacion');
+
+            // Formateador de moneda de Argentina (ARS)
+            const formatter = new Intl.NumberFormat('es-AR', {
+                style: 'currency',
+                currency: 'ARS',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            });
+
+            function calcularSimulaciones() {
+                const precioOriginal = parseFloat(inputPrecio.value) || 0;
+                const porcDescEf = parseFloat(inputPorcDescEf.value) || 0;
+                const esLiquidacion = switchLiquidacion.checked;
+                const porcLiquidacion = parseFloat(inputPorcLiquidacion.value) || 0;
+
+                // Si no hay precio ingresado, ocultamos las cajas de simulación
+                if (precioOriginal <= 0) {
+                    previewEfectivoBox.style.display = 'none';
+                    previewLiquidacionBox.style.display = 'none';
+                    return;
+                }
+
+                let precioListaActual = precioOriginal;
+
+                // 1. Simulación de Liquidación
+                if (esLiquidacion && porcLiquidacion > 0) {
+                    precioListaActual = precioOriginal - (precioOriginal * (porcLiquidacion / 100));
+                    textSimulacionLiquidacion.textContent = formatter.format(precioListaActual);
+                    previewLiquidacionBox.style.display = 'block';
+                } else {
+                    previewLiquidacionBox.style.display = 'none';
+                }
+
+                // 2. Simulación de Efectivo (Siempre sobre el precio base obtenido del paso anterior)
+                if (porcDescEf > 0) {
+                    const precioEfectivo = precioListaActual - (precioListaActual * (porcDescEf / 100));
+                    textSimulacionEfectivo.textContent = formatter.format(precioEfectivo);
+                    previewEfectivoBox.style.display = 'block';
+                } else {
+                    previewEfectivoBox.style.display = 'none';
+                }
+            }
+
+            function toggleLiquidacionInput() {
+                if (switchLiquidacion.checked) {
+                    inputPorcLiquidacion.removeAttribute('disabled');
+                    if (inputPorcLiquidacion.value === '0' || inputPorcLiquidacion.value === '') {
+                        inputPorcLiquidacion.value = '';
+                        inputPorcLiquidacion.focus();
+                    }
+                } else {
+                    inputPorcLiquidacion.setAttribute('disabled', 'true');
+                    inputPorcLiquidacion.value = 0;
+                }
+                calcularSimulaciones();
+            }
+
+            // Escuchar eventos para recalcular al instante
+            inputPrecio.addEventListener('input', calcularSimulaciones);
+            inputPorcDescEf.addEventListener('input', calcularSimulaciones);
+            inputPorcLiquidacion.addEventListener('input', calcularSimulaciones);
+            switchLiquidacion.addEventListener('change', toggleLiquidacionInput);
+
+            // Inicializar al cargar por primera vez
+            toggleLiquidacionInput();
         });
     </script>
 

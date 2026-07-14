@@ -27,12 +27,19 @@ class Producto extends Model
     public function getPrecioListaActualAttribute()
     {
         if ($this->liquidacion && $this->porc_liquidacion > 0) {
-            // Aplicamos el descuento de liquidación sobre el precio base
             return $this->precio - ($this->precio * ($this->porc_liquidacion / 100));
         }
-
-        // Si no está en liquidación, el precio de lista es el precio original
         return $this->precio;
+    }
+
+    public function getPrecioEfActualAttribute()
+    {
+        $precioBase = $this->precio_lista_actual; // Usa el método de arriba automáticamente
+
+        if ($this->porc_desc_ef > 0) {
+            return $precioBase - ($precioBase * ($this->porc_desc_ef / 100));
+        }
+        return $precioBase;
     }
 
     protected static function booted()
@@ -45,10 +52,10 @@ class Producto extends Model
             // 2. Si hay un porcentaje de descuento válido, aplicamos la rebaja
             if ($porcentajeDescuento > 0 && $porcentajeDescuento <= 100) {
                 $descuento = $precioOriginal * ($porcentajeDescuento / 100);
-                $producto->precio_final = $precioOriginal - $descuento;
+                $producto->precio_ef = $precioOriginal - $descuento;
             } else {
                 // Si el descuento es 0, el precio final es igual al precio original
-                $producto->precio_final = $precioOriginal;
+                $producto->precio_ef = $precioOriginal;
             }
         });
     }

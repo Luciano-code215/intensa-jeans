@@ -1,4 +1,4 @@
-@extends('layouts.app') {{-- O el nombre de tu plantilla principal (ej: layouts.layout) --}}
+@extends('layouts.app') {{-- O el nombre de tu plantilla principal --}}
 
 @section('content')
     {{-- CSS de Fancybox --}}
@@ -27,7 +27,7 @@
             {{-- COLUMNA IZQUIERDA: GALERÍA DE IMÁGENES --}}
             <div class="col-md-6 col-lg-5">
 
-                {{-- REGISTRO OCULTO PARA FANCYBOX (Evita duplicados y maneja el slider) --}}
+                {{-- REGISTRO OCULTO PARA FANCYBOX --}}
                 <div class="d-none">
                     <a href="{{ $urlPrincipal }}" data-fancybox="galeria-producto" id="fancy-link-0"></a>
                     @foreach ($producto->imagenesSecundarias as $index => $imgAdicional)
@@ -40,7 +40,7 @@
                 <div class="w-100 rounded-4 overflow-hidden mb-3 position-relative bg-light shadow-sm"
                     style="height: 500px; cursor: zoom-in;" onclick="abrirLightbox()">
 
-                    {{-- Etiquetas flotantes sobre la foto grande --}}
+                    {{-- Etiqueta: Agotado --}}
                     @if ($isAgotado)
                         <span
                             class="position-absolute top-50 start-50 translate-middle bg-dark text-white fw-bold px-4 py-2 rounded-3 shadow-lg text-uppercase tracking-wider"
@@ -49,12 +49,21 @@
                         </span>
                     @endif
 
+                    {{-- Etiqueta: Liquidación --}}
+                    @if ($producto->liquidacion && $producto->porc_liquidacion > 0 && !$isAgotado)
+                        <span
+                            class="position-absolute top-3 start-3 bg-danger text-white fw-bold px-3 py-2 rounded-3 shadow-lg text-uppercase tracking-wider"
+                            style="z-index: 10; font-size: 0.85rem; letter-spacing: 0.05em;">
+                            <i class="bi bi-fire"></i> {{ $producto->porc_liquidacion }}% OFF LIQ
+                        </span>
+                    @endif
+
                     <img id="fotoPrincipal" src="{{ $urlPrincipal }}" class="w-100 h-100 object-fit-cover"
                         style="{{ $isAgotado ? 'filter: grayscale(100%) opacity(50%);' : '' }}"
                         alt="{{ $producto->nombre }}">
                 </div>
 
-                {{-- MINIATURAS (Click para cambiar la foto grande) --}}
+                {{-- MINIATURAS (Click cambia la foto grande) --}}
                 <div class="d-flex gap-2 overflow-x-auto pb-2">
                     {{-- Miniatura Principal --}}
                     <div id="thumb-wrapper-0"
@@ -85,18 +94,48 @@
 
                     <h1 class="font-titulo fw-bold mb-3" style="color: #1a3352;">{{ $producto->nombre }}</h1>
 
-                    {{-- Precios --}}
-                    <div class="d-flex align-items-center gap-3 mb-4">
-                        <span class="fw-bold fs-2" style="color: #1a3352;">
-                            ${{ number_format($producto->precio_final, 0, ',', '.') }}
-                        </span>
-                        @if ($producto->porc_desc > 0)
-                            <span class="text-muted text-decoration-line-through fs-5">
-                                ${{ number_format($producto->precio, 0, ',', '.') }}
-                            </span>
-                            <span class="badge bg-danger px-3 py-2 rounded-pill small">
-                                {{ $producto->porc_desc }}% OFF
-                            </span>
+                    {{-- NUEVA SECCIÓN DE PRECIOS ADAPTADA Y CORREGIDA --}}
+                    <div class="mb-4">
+                        @if ($producto->liquidacion && $producto->porc_liquidacion > 0)
+                            {{-- Caso: Producto en liquidación --}}
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <span class="text-muted text-decoration-line-through fs-5">
+                                    ${{ number_format($producto->precio, 0, ',', '.') }}
+                                </span>
+                                <span class="fw-bold fs-2" style="color: #1a3352;">
+                                    ${{ number_format($producto->precio_lista_actual, 0, ',', '.') }}
+                                </span>
+                                <span class="badge bg-danger px-3 py-2 rounded-pill small">
+                                    {{ $producto->porc_liquidacion }}% OFF LIQ
+                                </span>
+                            </div>
+                        @else
+                            {{-- Caso: Producto normal --}}
+                            <div class="mb-2">
+                                <span class="fw-bold fs-2" style="color: #1a3352;">
+                                    ${{ number_format($producto->precio, 0, ',', '.') }}
+                                </span>
+                            </div>
+                        @endif
+
+                        {{-- Promoción en efectivo destacada (Siempre calculada sobre el precio real de arriba) --}}
+                        @if ($producto->porc_desc_ef > 0)
+                            <div class="card border-success bg-success-subtle p-3 rounded-4 mt-3">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        {{-- AQUÍ SE MUESTRA EL PRECIO EN EFECTIVO CORRECTO ($6.750 en tu ejemplo) --}}
+                                        <div class="fw-bold fs-3 text-success">
+                                            ${{ number_format($producto->precio_ef_actual, 0, ',', '.') }}
+                                        </div>
+                                        <div class="text-success-emphasis fw-semibold small">
+                                            Pagando en Efectivo / Transferencia Bancaria
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-success px-3 py-2 rounded-pill fs-6 text-white">
+                                        {{ $producto->porc_desc_ef }}% OFF
+                                    </span>
+                                </div>
+                            </div>
                         @endif
                     </div>
 
@@ -122,17 +161,14 @@
                                 @endphp
 
                                 <label class="position-relative">
-                                    {{-- Input oculto para armar botones tipo Radio --}}
                                     <input type="radio" name="talle_id" value="{{ $talle->id }}" class="btn-check"
                                         {{ !$hasStock ? 'disabled' : '' }} required>
 
-                                    {{-- El botón visual que ve la clienta --}}
                                     <span
                                         class="btn border fw-bold px-3 py-2 rounded-3 d-flex align-items-center justify-content-center"
                                         style="min-width: 55px; font-size: 0.85rem;">
                                         {{ $talle->nombre }}
                                         @if (!$hasStock)
-                                            {{-- Pequeña línea diagonal visual si no hay stock del talle --}}
                                             <span
                                                 class="position-absolute top-50 start-50 translate-middle text-muted opacity-50"
                                                 style="transform: translate(-50%, -50%) rotate(-45deg) !important; font-size: 1.2rem;">/</span>
@@ -142,7 +178,7 @@
                             @endforeach
                         </div>
 
-                        {{-- Botón de Acción Final --}}
+                        {{-- Botones de Acción --}}
                         <div class="mt-5">
                             @if ($isAgotado)
                                 <button type="button"
@@ -163,19 +199,14 @@
         </div>
     </div>
 
-    {{-- SCRIPT INTERACTIVO DE IMÁGENES --}}
+    {{-- SCRIPTS DE INTERACCIÓN --}}
     <script>
-        // Índice de la foto actualmente seleccionada
         let fotoActivaIndex = 0;
 
         function cambiarFoto(nuevaRuta, index) {
-            // 1. Cambia la foto principal en la pantalla
             document.getElementById('fotoPrincipal').src = nuevaRuta;
-
-            // 2. Guarda el índice de la foto activa
             fotoActivaIndex = index;
 
-            // 3. Remueve el borde azul de todas las miniaturas y se lo pone solo a la activa
             document.querySelectorAll('.thumb-container').forEach(el => {
                 el.classList.remove('active-thumb');
             });
@@ -183,13 +214,11 @@
         }
 
         function abrirLightbox() {
-            // Dispara programáticamente el clic en el enlace oculto de Fancybox que corresponde a la foto activa
             document.getElementById('fancy-link-' + fotoActivaIndex).click();
         }
     </script>
 
     <style>
-        /* Estilos de bordes y miniaturas activas */
         .thumb-container {
             border: 2px solid #dee2e6 !important;
             transition: all 0.2s ease-in-out;
@@ -199,13 +228,11 @@
             border-color: #1a3352 !important;
         }
 
-        /* Estilo para la miniatura seleccionada actualmente (borde de tu color denim #1a3352) */
         .active-thumb {
             border-color: #1a3352 !important;
             box-shadow: 0 0 0 2px rgba(26, 51, 82, 0.2);
         }
 
-        /* Estilo para que cuando se seleccione el talle cambie de color lindo */
         .btn-check:checked+.btn {
             background-color: #1a3352 !important;
             color: white !important;
@@ -222,17 +249,24 @@
         .cursor-pointer {
             cursor: pointer;
         }
+
+        .product-card img {
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover img {
+            transform: scale(1.05);
+        }
     </style>
 
     {{-- JS de Fancybox --}}
     <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
     <script>
-        // Inicializa Fancybox con opciones optimizadas para celulares y escritorio
         Fancybox.bind("[data-fancybox='galeria-producto']", {
             transitionEffect: "slide",
             Images: {
                 Panzoom: {
-                    maxScale: 3, // Zoom de hasta 3x al tocar/hacer doble click
+                    maxScale: 3,
                 },
             },
             Toolbar: {

@@ -4,8 +4,6 @@
 
 @section('content')
 
-    <!-- SECCIÓN: ENCABEZADO DE LA PÁGINA (CORREGIDO) -->
-
     <div class="bg-denim text-white py-5 text-center" style="background-color: #1a3352;">
         <div class="container py-3">
             <h1 class="font-titulo display-5 fw-bold mb-2">Nuestro Catálogo</h1>
@@ -18,8 +16,9 @@
 
         <div
             class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary-subtle">
-            <p class="text-muted small mb-3 mb-md-0">Mostrando <span class="fw-bold text-denim">6</span> productos
-                espectaculares</p>
+            <p class="text-muted small mb-3 mb-md-0">
+                Mostrando <span class="fw-bold text-denim">{{ $productos->count() }}</span> productos espectaculares
+            </p>
             <div class="d-flex gap-2">
                 <select class="form-select form-select-sm border-secondary-subtle text-muted"
                     style="max-width: 200px; font-size: 0.8rem;">
@@ -51,7 +50,7 @@
                         <div
                             class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden position-relative bg-white custom-card-hover {{ $isAgotado ? 'opacity-75' : '' }}">
 
-                            {{-- 1. ETIQUETA: AGOTADO (Prioridad visual absoluta, se ubica al centro o arriba) --}}
+                            {{-- 1. ETIQUETA: AGOTADO --}}
                             @if ($isAgotado)
                                 <span
                                     class="position-absolute top-50 start-50 translate-middle bg-dark text-white fw-bold px-4 py-2 rounded-3 shadow-lg text-uppercase tracking-wider"
@@ -60,8 +59,15 @@
                                 </span>
                             @endif
 
-                            {{-- 2. ETIQUETA: NUEVO (Arriba a la izquierda, solo si hay stock y es menor a 7 días) --}}
-                            @if ($producto->esNuevo() && !$isAgotado)
+                            {{-- 2. ETIQUETA: LIQUIDACIÓN 🔥 (Solo si está en liquidación y tiene stock) --}}
+                            @if ($producto->liquidacion && $producto->porc_liquidacion > 0 && !$isAgotado)
+                                <span
+                                    class="position-absolute top-0 start-0 bg-danger text-white small fw-bold px-3 py-1 m-3 rounded-pill shadow-sm"
+                                    style="font-size: 0.65rem; z-index: 10; letter-spacing: 0.5px;">
+                                    <i class="bi bi-fire"></i> {{ $producto->porc_liquidacion }}% OFF LIQ
+                                </span>
+                                {{-- 3. ETIQUETA: NUEVO (Solo si no está en liquidación, hay stock y es nuevo) --}}
+                            @elseif ($producto->esNuevo() && !$isAgotado)
                                 <span
                                     class="position-absolute top-0 start-0 text-dark small fw-bold px-3 py-1 m-3 rounded-pill shadow-sm"
                                     style="font-size: 0.65rem; background-color: #c9a054; z-index: 10;">
@@ -69,20 +75,11 @@
                                 </span>
                             @endif
 
-                            {{-- 3. ETIQUETA: DESCUENTO (Arriba a la derecha, se muestra siempre que tenga %, haya o no stock) --}}
-                            @if ($producto->tieneDescuento())
-                                <span
-                                    class="position-absolute top-0 end-0 bg-danger text-white small fw-bold px-3 py-1 m-3 rounded-pill shadow-sm"
-                                    style="font-size: 0.65rem; z-index: 10;">
-                                    {{ $producto->porc_desc }}% OFF
-                                </span>
-                            @endif
-
                             {{-- Contenedor de Imagen (Aplica filtro gris si está agotado) --}}
                             <div class="w-100" style="height: 280px; background-color: #f8f9fa;">
                                 @if ($producto->url_imagen)
                                     <img src="{{ str_starts_with($producto->url_imagen, 'http') ? $producto->url_imagen : asset($producto->url_imagen) }}"
-                                        class="w-100 h-100 object-fit-cover" {{-- Si está agotado, le aplicamos el filtro CSS inline para hacerlo gris --}}
+                                        class="w-100 h-100 object-fit-cover transition-img"
                                         style="{{ $isAgotado ? 'filter: grayscale(100%) opacity(40%);' : '' }}"
                                         alt="{{ $producto->nombre }}">
                                 @else
@@ -107,32 +104,57 @@
                                     </h5>
                                 </div>
 
+                                {{-- SECCIÓN DE PRECIOS ADAPTADA EN EL CATÁLOGO --}}
                                 <div class="mt-2">
-                                    <div class="d-flex align-items-center gap-2 mb-3">
-                                        <span class="fw-bold text-denim fs-5" style="color: #1a3352;">
-                                            ${{ number_format($producto->precio_final, 0, ',', '.') }}
-                                        </span>
-
-                                        @if ($producto->porc_desc > 0)
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        @if ($producto->liquidacion && $producto->porc_liquidacion > 0)
+                                            {{-- Caso: Producto en Liquidación --}}
                                             <span class="text-muted text-decoration-line-through small"
                                                 style="font-size: 0.75rem;">
+                                                ${{ number_format($producto->precio, 0, ',', '.') }}
+                                            </span>
+                                            <span class="fw-bold fs-5" style="color: #1a3352;">
+                                                ${{ number_format($producto->precio_lista_actual, 0, ',', '.') }}
+                                            </span>
+                                        @else
+                                            {{-- Caso: Producto Normal --}}
+                                            <span class="fw-bold fs-5" style="color: #1a3352;">
                                                 ${{ number_format($producto->precio, 0, ',', '.') }}
                                             </span>
                                         @endif
                                     </div>
 
-                                    {{-- Botón de Acción dinámico según el stock --}}
-                                    @if ($isAgotado)
-                                        <button
-                                            class="btn btn-sm w-100 py-2 fw-bold text-uppercase tracking-wider btn-secondary disabled"
-                                            style="font-size: 0.7rem;" disabled>
-                                            Sin Stock
-                                        </button>
+                                    {{-- PRECIO PROMO EN EFECTIVO CON MARGEN INFERIOR ASEGURADO (mb-3) --}}
+                                    @if ($producto->porc_desc_ef > 0 && !$isAgotado)
+                                        <div class="bg-success-subtle text-success-emphasis rounded-3 px-2.5 py-2 mb-3"
+                                            style="font-size: 0.75rem; line-height: 1.25;">
+                                            <div>
+                                                <span
+                                                    class="fw-bold fs-6">${{ number_format($producto->precio_ef_actual, 0, ',', '.') }}</span>
+                                                efectivo/transf.
+                                            </div>
+                                            <div class="text-success small fw-semibold mt-0.5">
+                                                {{ $producto->porc_desc_ef }}% OFF adicional
+                                            </div>
+                                        </div>
                                     @else
-                                        <a href="/productosPub/{{ $producto->id }}"
-                                            class="btn btn-sm w-100 py-2 fw-bold text-uppercase tracking-wider btn-denim-action"
-                                            style="font-size: 0.7rem;">
-                                            Ver Detalles
+                                        {{-- Mantiene el espacio constante si no hay descuento para que las tarjetas no se desalineen --}}
+                                        <div class="mb-3" style="height: 38px;"></div>
+                                    @endif
+                                </div>
+
+                                {{-- SECCIÓN DE BOTONES: Separados correctamente usando una estructura de pila (d-grid gap-2) --}}
+                                <div class="d-grid gap-2 mt-2">
+                                    <a href="{{ route('productos.show', $producto->id) }}"
+                                        class="btn text-white fw-semibold py-2"
+                                        style="background-color: #1a3352; border-radius: 8px;">
+                                        Ver Detalles
+                                    </a>
+
+                                    @if (auth()->check() && auth()->user()->isAdmin())
+                                        <a href="{{ route('admin.productos.edit', $producto->id) }}"
+                                            class="btn btn-outline-secondary fw-semibold py-2" style="border-radius: 8px;">
+                                            <i class="bi bi-pencil-square me-1"></i> Editar Producto
                                         </a>
                                     @endif
                                 </div>
@@ -142,31 +164,41 @@
                 @endforeach
             @endif
         </div>
+    </div>
 
-        <style>
-            /* Efecto de elevación elegante en las tarjetas al pasar el mouse */
-            .custom-card-hover {
-                transition: transform 0.3s ease, box-shadow 0.3s ease;
-            }
+    <style>
+        /* Efecto de elevación elegante en las tarjetas al pasar el mouse */
+        .custom-card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
 
-            .custom-card-hover:hover {
-                transform: translateY(-6px);
-                box-shadow: 0 10px 20px rgba(26, 51, 82, 0.12) !important;
-            }
+        .custom-card-hover:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 10px 20px rgba(26, 51, 82, 0.12) !important;
+        }
 
-            /* Botón personalizado con tu color Denim */
-            .btn-denim-action {
-                background-color: #1a3352;
-                color: #ffffff;
-                border: 1px solid #1a3352;
-                transition: all 0.2s ease;
-            }
+        /* Efecto suave de zoom en la imagen al hacer hover */
+        .custom-card-hover:hover .transition-img {
+            transform: scale(1.05);
+        }
 
-            .btn-denim-action:hover {
-                background-color: #c9a054;
-                border-color: #c9a054;
-                color: #1a3352;
-            }
-        </style>
+        .transition-img {
+            transition: transform 0.4s ease;
+        }
 
-    @endsection
+        /* Botón personalizado con tu color Denim */
+        .btn-denim-action {
+            background-color: #1a3352;
+            color: #ffffff;
+            border: 1px solid #1a3352;
+            transition: all 0.2s ease;
+        }
+
+        .btn-denim-action:hover {
+            background-color: #c9a054;
+            border-color: #c9a054;
+            color: #1a3352;
+        }
+    </style>
+
+@endsection

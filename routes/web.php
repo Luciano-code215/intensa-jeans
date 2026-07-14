@@ -57,6 +57,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     Route::post('/admin/talles', [TalleController::class, 'store'])->name('admin.talles.store');
 
+    Route::get('/admin/productos/{id}/edit', [ProductoController::class, 'edit'])->name('admin.productos.edit');
+
+    Route::put('/admin/productos/{id}', [ProductoController::class, 'update'])->name('admin.productos.update');
 });
 
 Route::get('/test-php', function () {
