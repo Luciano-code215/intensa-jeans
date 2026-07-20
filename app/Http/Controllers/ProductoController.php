@@ -44,10 +44,53 @@ class ProductoController extends Controller
     /**
      * VISTA PANEL ADMIN: Listado total de productos para el Administrador
      */
-    public function adminIndex()
+    public function indexAdmin(Request $request)
     {
-        $productos = Producto::with('categoria')->get();
-        return view('admin.productos.index', compact('productos'));
+        // Cargamos todas las categorías para llenar el selector dinámico de la vista
+        $categorias = Categoria::all();
+
+        // Query base cargando relaciones necesarias
+        $query = Producto::with(['categoria', 'talles']);
+
+        // Filtro: Búsqueda por texto (Nombre o SKU)
+        if ($request->filled('buscar')) {
+            $buscar = $request->input('buscar');
+            $query->where(function ($q) use ($buscar) {
+                $q->where('nombre', 'LIKE', "%{$buscar}%")
+                    ->orWhere('sku', 'LIKE', "%{$buscar}%");
+            });
+        }
+
+        // Filtro: Categoría
+        if ($request->filled('categoria')) {
+            $query->where('categoria_id', $request->input('categoria'));
+        }
+
+        // Filtro: Estado de Activación (Activos, Pausados/Desactivados o Todos)
+        $estado = $request->input('estado', 'activos'); // por defecto muestra los activos
+        if ($estado === 'activos') {
+            $query->where('activo', true);
+        } elseif ($estado === 'pausados') {
+            $query->where('activo', false);
+        }
+
+        // Ordenación
+        $ordenar = $request->input('ordenar', 'defecto');
+        switch ($ordenar) {
+            case 'precio-menor':
+                $query->orderBy('precio', 'asc');
+                break;
+            case 'precio-mayor':
+                $query->orderBy('precio', 'desc');
+                break;
+            default:
+                $query->latest(); // Más nuevos primero
+                break;
+        }
+
+        $productos = $query->get();
+
+        return view('admin.productos.index', compact('productos', 'categorias'));
     }
 
     /**
@@ -259,16 +302,11 @@ class ProductoController extends Controller
     {
         $producto = Producto::findOrFail($id);
 
-        // Borramos su imagen física
-        if ($producto->url_imagen && Storage::exists(str_replace('storage/', 'public/', $producto->url_imagen))) {
-            Storage::delete(str_replace('storage/', 'public/', $producto->url_imagen));
-        }
+        // Desactivamos el producto en lugar de eliminarlo físicamente
+        $producto->update(['activo' => false]);
 
-        // Al eliminar el producto, gracias al onDelete('cascade') de tu migración,
-        // Laravel borrará automáticamente sus registros de stock en producto_talles.
-        $producto->delete();
-
-        return redirect()->route('admin.productos.index')->with('success', 'Producto eliminado por completo.');
+        return redirect()->route('admin.productos.index')
+            ->with('producto_descativado', 'El producto ha sido desactivado y pausado de la tienda con éxito.');
     }
 
     public function show($id)
@@ -279,4 +317,14 @@ class ProductoController extends Controller
         // 2. Le enviamos toda esa información junta a la vista de detalles
         return view('productos.show', compact('producto'));
     }
+
+    public function reactivar($id)
+    {
+        $producto = Producto::findOrFail($id);
+        $producto->update(['activo' => true]);
+
+        return redirect()->route('admin.productos.index')
+            ->with('producto_reactivado', 'El producto ha sido reactivado y publicado en la tienda con éxito.');
+    }
+
 }

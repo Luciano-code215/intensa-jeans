@@ -12,4 +12,11 @@ class Categoria extends Model
     {
         return $this->hasMany(Producto::class);
     }
+
+    public function cantidadProductosActivos()
+    {
+        return $this->productos()->where('activo', true)->count();
+    }
+
+
 }

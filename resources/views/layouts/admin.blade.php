@@ -95,7 +95,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-white hover-sidebar rounded-3 py-2.5 px-3 d-flex align-items-center gap-2 {{ Request::is('admin/ordenes*') ? 'bg-white bg-opacity-10 text-white' : 'text-white-50' }}"
+                            <a class="nav-link text-white hover-sidebar rounded-3 py-2.5 px-3 d-flex align-items-center gap-2 {{ Request::is('admin/ventas*') ? 'bg-white bg-opacity-10 text-white' : 'text-white-50' }}"
                                 href="{{ route('admin.ventas.index') }}">
                                 <i class="bi bi-cart3"></i> Órdenes / Ventas
                             </a>

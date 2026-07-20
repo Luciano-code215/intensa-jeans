@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TalleController;
+use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\UsuariosController;
 
 Route::get('/', function () {
     return view('index');
@@ -31,17 +33,21 @@ Route::middleware(['auth', 'admin'])->group(function () {
         return view('admin.dashboard');
     })->name('dashboard');
 
-    Route::get('/admin/categorias', function () {
-        return view('admin.categorias.index');
-    })->name('admin.categorias.index');
+    Route::get('/admin/categorias', [CategoriaController::class, 'index'])->name('admin.categorias.index');
 
-    Route::get('/admin/usuarios', function () {
-        return view('admin.usuarios.index');
-    })->name('admin.usuarios.index');
+    Route::post('/admin/categorias', [CategoriaController::class, 'store'])->name('admin.categorias.store');
 
-    Route::get('/admin/productos', function () {
-        return view('admin.productos.index');
-    })->name('admin.productos.index');
+    Route::get('/admin/categorias/{id}/alterar-estado', [CategoriaController::class, 'alterarEstado'])->name('admin.categoria.alterar-estado');
+
+    Route::get('/admin/usuarios', [UsuariosController::class, 'index'])->name('admin.usuarios.index');
+
+    Route::post('/admin/usuarios/store-admin', [UsuariosController::class, 'storeAdmin'])->name('admin.usuarios.store-admin');
+
+    Route::put('/admin/usuarios/update-password', [UsuariosController::class, 'updatePassword'])->name('admin.usuarios.update-password');
+
+    Route::get('/admin/usuarios/{id}/cambiar-estado', [UsuariosController::class, 'cambiarEstado'])->name('admin.usuarios.cambiar-estado');
+
+    Route::get('/admin/productos', [ProductoController::class, 'indexAdmin'])->name('admin.productos.index');
 
     Route::get('/admin/ventas', function () {
         return view('admin.ventas.index');
@@ -60,6 +66,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/productos/{id}/edit', [ProductoController::class, 'edit'])->name('admin.productos.edit');
 
     Route::put('/admin/productos/{id}', [ProductoController::class, 'update'])->name('admin.productos.update');
+
+    Route::delete('/admin/productos/{id}', [ProductoController::class, 'destroy'])->name('admin.productos.destroy');
+
+    Route::post('/admin/productos/{id}/reactivar', [ProductoController::class, 'reactivar'])->name('admin.productos.reactivar');
 });
 
 Route::get('/test-php', function () {
