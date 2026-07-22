@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Orden extends Model
 {
     protected $table = 'ordenes'; // Forzamos el plural correcto en español
-    protected $fillable = ['user_id', 'total', 'estado'];
+    protected $fillable = ['user_id', 'total', 'estado', 'origen'];
 
     public function user()
     {
@@ -24,5 +24,10 @@ class Orden extends Model
     {
         $this->total = $this->items()->sum('subtotal');
         $this->save();
+    }
+
+    static public function cantidadVentasPorEstado($estado)
+    {
+        return self::where('estado', $estado)->count();
     }
 }
