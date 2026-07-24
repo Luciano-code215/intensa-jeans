@@ -51,9 +51,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     Route::get('/admin/ventas', [App\Http\Controllers\VentasController::class, 'index'])->name('admin.ventas.index');
 
-    Route::get('/admin/consultas', function () {
-        return view('admin.consultas.index');
-    })->name('admin.consultas.index');
+    Route::get('/admin/consultas', [App\Http\Controllers\ConsultasController::class, 'index'])->name('admin.consultas.index');
 
     Route::get('/admin/productos/create', [ProductoController::class, 'create'])->name('admin.productos.create');
 

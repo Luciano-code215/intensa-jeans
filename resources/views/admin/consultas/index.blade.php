@@ -26,7 +26,7 @@
                     <div>
                         <span class="text-uppercase fw-bold tracking-wider lh-1"
                             style="font-size: 0.78rem; letter-spacing: 0.5px; opacity: 0.9;">Total Consultas</span>
-                        <h1 class="fw-bold my-1 display-5 lh-1">4</h1>
+                        <h1 class="fw-bold my-1 display-5 lh-1">{{ \App\Models\Consulta::total() }}</h1>
                     </div>
                     <p class="small mb-0 opacity-75 fw-medium" style="font-size: 0.85rem;">Historial acumulado de preguntas
                     </p>
@@ -42,7 +42,7 @@
                     <div>
                         <span class="text-uppercase fw-bold tracking-wider lh-1"
                             style="font-size: 0.78rem; letter-spacing: 0.5px; opacity: 0.9;">Sin Responder</span>
-                        <h1 class="fw-bold my-1 display-5 lh-1">0</h1>
+                        <h1 class="fw-bold my-1 display-5 lh-1">{{ \App\Models\Consulta::cantPendientes() }}</h1>
                     </div>
                     <p class="small mb-0 opacity-75 fw-medium" style="font-size: 0.85rem;">Mensajes críticos que esperan
                         feedback</p>
@@ -58,7 +58,7 @@
                     <div>
                         <span class="text-uppercase fw-bold tracking-wider lh-1"
                             style="font-size: 0.78rem; letter-spacing: 0.5px; opacity: 0.9;">Respondidas</span>
-                        <h1 class="fw-bold my-1 display-5 lh-1">4</h1>
+                        <h1 class="fw-bold my-1 display-5 lh-1">{{ \App\Models\Consulta::cantRespondidas() }}</h1>
                     </div>
                     <p class="small mb-0 opacity-75 fw-medium" style="font-size: 0.85rem;">Consultas atendidas correctamente
                     </p>
@@ -74,12 +74,21 @@
                 <i class="bi bi-filter-left fs-5 text-secondary"></i> Bandeja de Entrada
             </h6>
 
-            <form action="#" method="GET" class="row">
+            <form action="{{ route('admin.consultas.index') }}" method="GET" class="row">
                 <div class="col-12">
                     <select class="form-select rounded-3 py-2.5 text-secondary bg-white" name="filtro_cuenta"
-                        style="border-color: #0d6efd !important;">
-                        <option value="todas">Mostrar todas las consultas de la cuenta</option>
-                        <option value="pendientes">Mostrar solo pendientes</option>
+                        style="border-color: #0d6efd !important;" onchange="this.form.submit()"> {{-- Enviamos el formulario al cambiar de opción --}}
+
+                        <option value="todas" {{ request('filtro_cuenta') == 'todas' ? 'selected' : '' }}>
+                            Mostrar todas las consultas de la cuenta
+                        </option>
+                        <option value="pendientes" {{ request('filtro_cuenta') == 'pendientes' ? 'selected' : '' }}>
+                            Mostrar solo pendientes
+                        </option>
+                        <option value="respondidas" {{ request('filtro_cuenta') == 'respondidas' ? 'selected' : '' }}>
+                            Mostrar solo respondidas
+                        </option>
+
                     </select>
                 </div>
             </form>
@@ -101,71 +110,106 @@
                     </thead>
                     <tbody style="font-size: 0.95rem;">
 
-                        {{-- Registro 1 --}}
-                        <tr class="border-bottom border-light">
-                            <td class="text-muted font-monospace fw-bold ps-2">#USR-003</td>
-                            <td class="text-lowercase text-secondary">luciano</td>
-                            <td class="text-dark">Soporte técnico / Falla en pasarela</td>
-                            <td class="text-muted small">16/06/2026 23:09</td>
-                            <td>
-                                <span
-                                    class="badge bg-success px-2.5 py-1.5 rounded-2 d-inline-flex align-items-center gap-1"
-                                    style="font-size: 0.8rem; background-color: #198754 !important;">
-                                    <i class="bi bi-check-circle-fill" style="font-size: 0.75rem;"></i> Respondida
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                <a href="#"
-                                    class="btn btn-secondary btn-sm rounded-3 px-3 py-1.5 d-inline-flex align-items-center gap-1 fw-medium"
-                                    style="background-color: #6c757d; font-size: 0.85rem; border: 0;">
-                                    <i class="bi bi-eye-fill"></i> Ver Respuesta
-                                </a>
-                            </td>
-                        </tr>
+                        @foreach ($consultas as $consulta)
+                            <tr class="border-bottom border-light">
+                                <td class="text-muted font-monospace fw-bold ps-2">{{ $consulta->user_id }}</td>
+                                <td class="text-lowercase text-secondary">
+                                    {{ optional($consulta->user)->name ?? 'Invitado' }}</td>
+                                <td class="text-dark">{{ $consulta->asunto }}</td>
+                                <td class="text-muted small">
+                                    {{ $consulta->created_at ? $consulta->created_at->format('d/m/Y H:i') : '-' }}</td>
+                                <td>
+                                    <span
+                                        class="badge bg-success px-2.5 py-1.5 rounded-2 d-inline-flex align-items-center gap-1"
+                                        style="font-size: 0.8rem; background-color: #198754 !important;">
+                                        <i class="bi bi-check-circle-fill" style="font-size: 0.75rem;"></i> Respondida
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    {{-- BOTÓN QUE ABRE EL MODAL --}}
+                                    <button type="button"
+                                        class="btn btn-secondary btn-sm rounded-3 px-3 py-1.5 d-inline-flex align-items-center gap-1 fw-medium"
+                                        style="background-color: #6c757d; font-size: 0.85rem; border: 0;"
+                                        data-bs-toggle="modal" data-bs-target="#modalConsulta{{ $consulta->id }}">
+                                        <i class="bi bi-eye-fill"></i> Ver mensaje
+                                    </button>
+                                </td>
+                            </tr>
 
-                        {{-- Registro 2 --}}
-                        <tr class="border-bottom border-light">
-                            <td class="text-muted font-monospace fw-bold ps-2">#USR-003</td>
-                            <td class="text-lowercase text-secondary">luciano</td>
-                            <td class="text-dark">Jean Mom talle 42 - Cambio de talle</td>
-                            <td class="text-muted small">16/06/2026 22:13</td>
-                            <td>
-                                <span
-                                    class="badge bg-success px-2.5 py-1.5 rounded-2 d-inline-flex align-items-center gap-1"
-                                    style="font-size: 0.8rem; background-color: #198754 !important;">
-                                    <i class="bi bi-check-circle-fill" style="font-size: 0.75rem;"></i> Respondida
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                <a href="#"
-                                    class="btn btn-secondary btn-sm rounded-3 px-3 py-1.5 d-inline-flex align-items-center gap-1 fw-medium"
-                                    style="background-color: #6c757d; font-size: 0.85rem; border: 0;">
-                                    <i class="bi bi-eye-fill"></i> Ver Respuesta
-                                </a>
-                            </td>
-                        </tr>
+                            {{-- MODAL DETALLE DE LA CONSULTA --}}
+                            <div class="modal fade" id="modalConsulta{{ $consulta->id }}" tabindex="-1"
+                                aria-labelledby="modalConsultaLabel{{ $consulta->id }}" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-lg">
+                                    <div class="modal-content border-0 shadow-lg rounded-4">
 
-                        {{-- Registro 3 --}}
-                        <tr class="border-bottom border-light">
-                            <td class="text-muted font-monospace fw-bold ps-2">#USR-003</td>
-                            <td class="text-lowercase text-secondary">luciano</td>
-                            <td class="text-dark">Recibí en malas condiciones el paquete</td>
-                            <td class="text-muted small">16/06/2026 18:25</td>
-                            <td>
-                                <span
-                                    class="badge bg-success px-2.5 py-1.5 rounded-2 d-inline-flex align-items-center gap-1"
-                                    style="font-size: 0.8rem; background-color: #198754 !important;">
-                                    <i class="bi bi-check-circle-fill" style="font-size: 0.75rem;"></i> Respondida
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                <a href="#"
-                                    class="btn btn-secondary btn-sm rounded-3 px-3 py-1.5 d-inline-flex align-items-center gap-1 fw-medium"
-                                    style="background-color: #6c757d; font-size: 0.85rem; border: 0;">
-                                    <i class="bi bi-eye-fill"></i> Ver Respuesta
-                                </a>
-                            </td>
-                        </tr>
+                                        {{-- Encabezado del Modal --}}
+                                        <div class="modal-header border-0 pb-0">
+                                            <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2"
+                                                id="modalConsultaLabel{{ $consulta->id }}">
+                                                <i class="bi bi-envelope-open-text text-primary fs-4"></i> Detalle de la
+                                                Consulta
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+
+                                        <div class="modal-body p-4">
+
+                                            {{-- Tarjeta con Datos del Usuario --}}
+                                            <div class="bg-light p-3 rounded-3 mb-3 border">
+                                                <h6 class="fw-bold text-secondary mb-2 small text-uppercase font-monospace">
+                                                    Información del Remitente</h6>
+                                                <div class="row g-2 text-start">
+                                                    <div class="col-12 col-md-4">
+                                                        <span class="text-muted d-block small">Usuario:</span>
+                                                        <strong
+                                                            class="text-dark">{{ optional($consulta->user)->name ?? ($consulta->nombre ?? 'N/A') }}</strong>
+                                                    </div>
+                                                    <div class="col-12 col-md-4">
+                                                        <span class="text-muted d-block small">Email:</span>
+                                                        <strong
+                                                            class="text-dark">{{ optional($consulta->user)->email ?? ($consulta->email ?? 'N/A') }}</strong>
+                                                    </div>
+                                                    <div class="col-12 col-md-4">
+                                                        <span class="text-muted d-block small">Teléfono:</span>
+                                                        <strong
+                                                            class="text-dark">{{ optional($consulta->user)->telefono ?? ($consulta->telefono ?? 'N/A') }}</strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {{-- Asunto y Fecha --}}
+                                            <div class="mb-3 text-start">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <span class="fw-bold text-dark fs-6">{{ $consulta->asunto }}</span>
+                                                    <span class="badge bg-secondary opacity-75 font-monospace fw-normal">
+                                                        {{ $consulta->created_at ? $consulta->created_at->format('d/m/Y H:i') : '-' }}
+                                                        hs
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {{-- Mensaje / Contenido de la consulta --}}
+                                            <div class="text-start">
+                                                <label class="form-label small fw-bold text-muted mb-1">Mensaje:</label>
+                                                <div class="p-3 bg-white rounded-3 border text-secondary"
+                                                    style="white-space: pre-line; min-height: 100px;">
+                                                    {{ $consulta->mensaje ?? ($consulta->contenido ?? 'Sin contenido especificado.') }}
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                        {{-- Pie del Modal --}}
+                                        <div class="modal-footer border-0 pt-0">
+                                            <button type="button" class="btn btn-outline-secondary rounded-3 px-4"
+                                                data-bs-dismiss="modal">Cerrar</button>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
 
                     </tbody>
                 </table>

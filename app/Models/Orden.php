@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Orden extends Model
 {
     protected $table = 'ordenes'; // Forzamos el plural correcto en español
-    protected $fillable = ['user_id', 'total', 'estado', 'origen'];
+    protected $fillable = ['user_id', 'total', 'estado', 'origen', 'metodo_pago'];
 
     public function user()
     {

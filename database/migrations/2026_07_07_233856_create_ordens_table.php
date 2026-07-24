@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->decimal('total', 10, 2)->default(0.00);
             $table->enum('estado', ['creada', 'pagada', 'entregada', 'cancelada'])->default('creada');
             $table->string('origen')->nullable(); // Nueva columna para el origen de la orden
+            $table->enum('metodo_pago', ['efectivo', 'tarjeta', 'transferencia'])->nullable(); // Nueva columna para el método de pago
             $table->timestamps();
         });
     }
