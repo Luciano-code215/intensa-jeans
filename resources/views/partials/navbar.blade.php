@@ -26,14 +26,13 @@
 </div>
 
 <style>
-    /* Estilo para un leve efecto de respuesta al pasar el mouse por los enlaces */
     .hover-opacity:hover {
         opacity: 0.8;
         transition: opacity 0.2s ease;
     }
 </style>
 
-<!-- BARRA DE ANUNCIO SUPERIOR MODIFICADA (FONDO ORO - LETRAS AZULES) -->
+<!-- BARRA DE ANUNCIO SUPERIOR MODIFICADA -->
 <div class="bg-oro text-denim py-2 fw-bold small text-center tracking-wider shadow-sm">
     <div class="container d-flex flex-column flex-sm-row justify-content-center align-items-center gap-3 gap-sm-5"
         style="font-size: 0.75rem;">
@@ -45,54 +44,126 @@
 </div>
 
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top py-2">
-    <div class="container">
+    <div class="container position-relative">
 
+        {{-- LOGO --}}
         <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}">
             <img src="{{ asset('images/logo-intensa.jpeg') }}" alt="Logo Intensa Jeans" width="60" height="60"
                 class="rounded-circle shadow-sm me-2" style="object-fit: cover;">
             <span class="font-titulo fw-bold tracking-wider text-denim fs-3 d-none d-sm-inline">INTENSA jeans</span>
         </a>
 
+        {{-- BOTÓN HAMBURGUESA (MÓVIL) --}}
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContenido"
             aria-controls="navbarContenido" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
+        {{-- MENÚ DE NAVEGACIÓN PRINCIPAL --}}
         <div class="collapse navbar-collapse" id="navbarContenido">
             <ul class="navbar-nav mx-auto mb-2 mb-lg-0 fw-medium text-center">
-                <li class="nav-item mx-2">
-                    <a class="nav-link active text-denim border-bottom border-2 border-warning"
-                        style="border-color: #d4af37 !important;" href="{{ url('/') }}">Inicio</a>
-                </li>
-                <li class="nav-item mx-2">
-                    <a class="nav-link text-secondary" href="/catalogo?estilo=skinny">Skinny Jeans</a>
-                </li>
-                <li class="nav-item mx-2">
-                    <a class="nav-link text-secondary" href="/catalogo?estilo=mom">Mom Jeans</a>
-                </li>
-                <li class="nav-item mx-2">
-                    <a class="nav-link text-secondary" href="#">Wide Leg / Baggy</a>
-                </li>
-                <li class="nav-item mx-2">
-                    <a class="nav-link text-secondary" href="#">Shorts & Polleras</a>
-                </li>
-                <li class="nav-item mx-2">
-                    <a class="nav-link text-secondary" href="/catalogo">Catálogo Completo</a>
-                </li>
-                <li class="nav-item mx-2">
-                    <a class="nav-link text-danger fw-bold" href="#">Liquidadas 🔥</a>
-                </li>
-            </ul>
-        </div> {{-- CIERRE CORRECTO DEL COLLAPSE DEL MENU CENTRO --}}
 
+                {{-- Helper PHP rápido para verificar si una categoría coincide exactamente --}}
+                @php
+                    $buscar = request('buscar');
+                    $liquidacion = request('liquidacion');
+                    $esCatalogo = request()->routeIs('catalogo.index');
+
+                    // Mapeo de búsquedas exactas para saber si estamos en una categoría del menú
+                    $categoriasMenu = ['Skinny chupin', 'mom', 'Wide Leg Baggy', 'Short Pollera'];
+
+                    // Si estamos en el catálogo pero NO es liquidación ni una categoría del menú, es Búsqueda General / Catálogo Completo
+                    $esCatalogoCompleto = $esCatalogo && !$liquidacion && !in_array($buscar, $categoriasMenu);
+                @endphp
+
+                <!-- 1. Inicio -->
+                <li class="nav-item mx-2">
+                    <a class="nav-link text-secondary {{ request()->routeIs('home') || request()->is('/') ? 'active fw-bold text-denim border-bottom border-2 border-warning' : '' }}"
+                        style="{{ request()->routeIs('home') || request()->is('/') ? 'border-color: #d4af37 !important;' : '' }}"
+                        href="{{ url('/') }}">Inicio</a>
+                </li>
+
+                <!-- 2. Skinny Jeans -->
+                <li class="nav-item mx-2">
+                    <a class="nav-link text-secondary {{ $esCatalogo && $buscar === 'Skinny chupin' && !$liquidacion ? 'active fw-bold text-denim border-bottom border-2 border-warning' : '' }}"
+                        style="{{ $esCatalogo && $buscar === 'Skinny chupin' && !$liquidacion ? 'border-color: #d4af37 !important;' : '' }}"
+                        href="{{ route('catalogo.index', ['buscar' => 'Skinny chupin']) }}">Skinny Jeans</a>
+                </li>
+
+                <!-- 3. Mom Jeans -->
+                <li class="nav-item mx-2">
+                    <a class="nav-link text-secondary {{ $esCatalogo && $buscar === 'mom' && !$liquidacion ? 'active fw-bold text-denim border-bottom border-2 border-warning' : '' }}"
+                        style="{{ $esCatalogo && $buscar === 'mom' && !$liquidacion ? 'border-color: #d4af37 !important;' : '' }}"
+                        href="{{ route('catalogo.index', ['buscar' => 'mom']) }}">Mom Jeans</a>
+                </li>
+
+                <!-- 4. Wide Leg / Baggy -->
+                <li class="nav-item mx-2">
+                    <a class="nav-link text-secondary {{ $esCatalogo && $buscar === 'Wide Leg Baggy' && !$liquidacion ? 'active fw-bold text-denim border-bottom border-2 border-warning' : '' }}"
+                        style="{{ $esCatalogo && $buscar === 'Wide Leg Baggy' && !$liquidacion ? 'border-color: #d4af37 !important;' : '' }}"
+                        href="{{ route('catalogo.index', ['buscar' => 'Wide Leg Baggy']) }}">Wide Leg / Baggy</a>
+                </li>
+
+                <!-- 5. Shorts & Polleras -->
+                <li class="nav-item mx-2">
+                    <a class="nav-link text-secondary {{ $esCatalogo && $buscar === 'Short Pollera' && !$liquidacion ? 'active fw-bold text-denim border-bottom border-2 border-warning' : '' }}"
+                        style="{{ $esCatalogo && $buscar === 'Short Pollera' && !$liquidacion ? 'border-color: #d4af37 !important;' : '' }}"
+                        href="{{ route('catalogo.index', ['buscar' => 'Short Pollera']) }}">Shorts & Polleras</a>
+                </li>
+
+                <!-- 6. Catálogo Completo (Se activa con búsquedas personalizadas o sin filtros) -->
+                <li class="nav-item mx-2">
+                    <a class="nav-link text-secondary {{ $esCatalogoCompleto ? 'active fw-bold text-denim border-bottom border-2 border-warning' : '' }}"
+                        style="{{ $esCatalogoCompleto ? 'border-color: #d4af37 !important;' : '' }}"
+                        href="{{ route('catalogo.index') }}">Catálogo Completo</a>
+                </li>
+
+                <!-- 7. Liquidadas -->
+                <li class="nav-item mx-2">
+                    <a class="nav-link text-danger fw-bold {{ $esCatalogo && $liquidacion ? 'border-bottom border-2 border-danger pb-1' : '' }}"
+                        href="{{ route('catalogo.index', ['liquidacion' => 1]) }}">
+                        Liquidadas 🔥
+                    </a>
+                </li>
+
+            </ul>
+        </div>
+
+        {{-- SECCIÓN DE ICONOS A LA DERECHA --}}
         <div class="d-flex justify-content-center gap-3 fs-5 text-secondary pt-2 pt-lg-0 align-items-center">
 
-            {{-- 1. Icono de Búsqueda --}}
-            <a href="#" class="text-secondary hover-denim"><i class="bi bi-search"></i></a>
+            {{-- 1. Icono de Búsqueda Desplegable --}}
+            <div class="dropdown position-static">
+                <a href="#" class="text-secondary hover-denim no-arrow d-inline-block" id="dropdownBuscador"
+                    data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
+                    title="Buscar productos">
+                    <i class="bi bi-search"></i>
+                </a>
 
-            {{-- 2. Menú Desplegable de la Personita --}}
+                {{-- Menú flotante del buscador --}}
+                <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-3 rounded-4 mt-3"
+                    aria-labelledby="dropdownBuscador" style="width: 320px; z-index: 1060;">
+                    <form action="{{ route('catalogo.index') }}" method="GET">
+                        @if (request('liquidacion'))
+                            <input type="hidden" name="liquidacion" value="{{ request('liquidacion') }}">
+                        @endif
+
+                        <label class="form-label text-denim fw-bold small mb-2">Buscar en Intensa Jeans</label>
+                        <div class="input-group">
+                            <input type="text" name="buscar"
+                                class="form-control form-control-sm rounded-start-pill ps-3"
+                                placeholder="Ej: Mom, Skinny, Wide..." value="{{ request('buscar') }}" autofocus>
+                            <button class="btn btn-sm text-white rounded-end-pill px-3" type="submit"
+                                style="background-color: #1a3352;">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {{-- 2. Menú Desplegable de Usuario --}}
             <div class="dropdown">
-                {{-- Se añade el rol button por accesibilidad y compatibilidad estricta --}}
                 <a href="#" class="text-secondary hover-denim dropdown-toggle no-arrow d-inline-block"
                     id="menuUsuario" data-bs-toggle="dropdown" role="button" aria-expanded="false">
                     <i class="bi bi-person"></i>
@@ -101,7 +172,6 @@
                 <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-3 mt-2"
                     aria-labelledby="menuUsuario" style="font-size: 0.85rem; min-width: 180px; z-index: 1050;">
 
-                    {{-- CASO 1: SI NO HAY NADIE LOGUEADO (Invitado) --}}
                     @guest
                         <li>
                             <a class="dropdown-item py-2" href="{{ route('login') }}">
@@ -115,7 +185,6 @@
                         </li>
                     @endguest
 
-                    {{-- CASO 2: SI HAY ALGUIEN LOGUEADO --}}
                     @auth
                         <li class="dropdown-header text-dark fw-bold border-bottom pb-2 mb-1">
                             Hola, {{ Auth::user()->name }}
@@ -154,7 +223,7 @@
                 </ul>
             </div>
 
-            {{-- 3. Icono del Carrito/Favoritos --}}
+            {{-- 3. Icono del Carrito --}}
             <a href="#" class="text-secondary hover-denim position-relative">
                 <i class="bi bi-bag-heart"></i>
                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-circle bg-oro text-denim"

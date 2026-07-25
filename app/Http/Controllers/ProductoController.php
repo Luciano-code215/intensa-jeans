@@ -15,30 +15,58 @@ class ProductoController extends Controller
      */
     public function index(Request $request)
     {
-        // Iniciamos la consulta base con productos activos
-        $query = Producto::where('activo', true)->with('talles');
+        $query = Producto::with(['talles', 'categoria']);
 
-        // Filtro por palabra clave (Buscador y Botones de Categorías)
-        if ($request->has('buscar') && $request->buscar != '') {
-            $palabra = $request->buscar;
+        // 1. Buscador por palabra clave (nombre o descripción)
+        if ($request->filled('buscar')) {
+            $terminos = array_filter(explode(' ', trim($request->buscar)));
 
-            $query->where(function ($q) use ($palabra) {
-                $q->where('nombre', 'LIKE', "%$palabra%")
-                    ->orWhere('descripcion', 'LIKE', "%$palabra%")
-                    // También busca si coincide con el nombre de la categoría
-                    ->orWhereHas('categoria', function ($statusQuery) use ($palabra) {
-                        $statusQuery->where('nombre', 'LIKE', "%$palabra%");
-                    });
+            $query->where(function ($q) use ($terminos) {
+                foreach ($terminos as $termino) {
+                    $q->orWhere('nombre', 'LIKE', "%{$termino}%")
+                        ->orWhere('descripcion', 'LIKE', "%{$termino}%");
+                }
             });
         }
 
-        // Traemos los productos filtrados
+        // 2. Filtro por Categoría
+        if ($request->filled('categoria')) {
+            $query->where('categoria_id', $request->categoria);
+        }
+
+        // 3. Filtro por Liquidación (Mantiene el filtro activo)
+        $esLiquidacion = $request->filled('liquidacion') && $request->liquidacion == 1;
+        if ($esLiquidacion) {
+            $query->where('liquidacion', true);
+        }
+
+        // 4. Ordenamiento
+        if ($request->filled('orden')) {
+            switch ($request->orden) {
+                case 'precio_asc':
+                    $query->orderBy('precio', 'asc');
+                    break;
+                case 'precio_desc':
+                    $query->orderBy('precio', 'desc');
+                    break;
+                case 'novedades':
+                    $query->where('created_at', '>=', now()->subDays(7))
+                        ->latest();
+                    break;
+                default:
+                    $query->latest();
+                    break;
+            }
+        } else {
+            $query->latest();
+        }
+
         $productos = $query->get();
 
-        // Traemos las categorías activas para la botonera
-        $categoriasMenu = Categoria::where('activo', true)->get();
+        // Obtenemos las categorías que tengan al menos 1 producto
+        $categorias = Categoria::has('productos')->get();
 
-        return view('catalogo', compact('productos', 'categoriasMenu'));
+        return view('catalogo', compact('productos', 'categorias', 'esLiquidacion'));
     }
 
     /**

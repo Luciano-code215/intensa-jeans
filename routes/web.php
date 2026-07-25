@@ -7,11 +7,9 @@ use App\Http\Controllers\TalleController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\UsuariosController;
 
-Route::get('/', function () {
-    return view('index');
-});
+Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
-Route::get('/catalogo', [ProductoController::class, 'index'])->name('catalogo');
+Route::get('/catalogo', [ProductoController::class, 'index'])->name('catalogo.index');
 
 Route::get('/productosPub/{id}', [ProductoController::class, 'show'])->name('productos.show');
 
