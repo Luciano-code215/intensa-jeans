@@ -68,7 +68,14 @@
 <body>
 
     @include('partials.navbar')
-
+    @if (session('agregado_carrito'))
+        <div class="container mt-3">
+            <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> {{ session('agregado_carrito') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    @endif
     <main>
         @yield('content')
     </main>

@@ -146,28 +146,33 @@
                     </p>
 
                     {{-- FORMULARIO DE SELECCIÓN DE TALLE --}}
-                    <form action="#" method="POST" class="mt-4">
+                    {{-- FORMULARIO DE SELECCIÓN DE TALLE Y AGREGAR AL CARRITO --}}
+                    <form action="{{ route('carrito.add', $producto->id) }}" method="POST" class="mt-4">
                         @csrf
-                        <input type="hidden" name="producto_id" value="{{ $producto->id }}">
 
                         <h6 class="fw-bold mb-3 text-uppercase small tracking-wider" style="color: #1a3352;">
                             Seleccioná tu Talle:
                         </h6>
 
+                        {{-- Opciones de Talles Dinámicos --}}
                         <div class="d-flex flex-wrap gap-2 mb-4">
                             @foreach ($producto->talles as $talle)
                                 @php
-                                    $hasStock = $talle->pivot->stock > 0;
+                                    $stockTalle = $talle->pivot->stock;
+                                    $hasStock = $stockTalle > 0;
                                 @endphp
 
                                 <label class="position-relative">
-                                    <input type="radio" name="talle_id" value="{{ $talle->id }}" class="btn-check"
+                                    {{-- Guardamos el stock del talle en el atributo 'data-stock' --}}
+                                    <input type="radio" name="talle" value="{{ $talle->nombre }}"
+                                        data-stock="{{ $stockTalle }}" class="btn-check input-talle"
                                         {{ !$hasStock ? 'disabled' : '' }} required>
 
                                     <span
                                         class="btn border fw-bold px-3 py-2 rounded-3 d-flex align-items-center justify-content-center"
                                         style="min-width: 55px; font-size: 0.85rem;">
                                         {{ $talle->nombre }}
+
                                         @if (!$hasStock)
                                             <span
                                                 class="position-absolute top-50 start-50 translate-middle text-muted opacity-50"
@@ -178,8 +183,24 @@
                             @endforeach
                         </div>
 
+                        {{-- Selector de Cantidad --}}
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            <label for="cantidad" class="fw-bold small text-uppercase tracking-wider"
+                                style="color: #1a3352;">
+                                Cantidad:
+                            </label>
+                            <input type="number" id="cantidad" name="cantidad" value="1" min="1"
+                                max="1" class="form-control text-center rounded-3 fw-bold" style="width: 80px;"
+                                required>
+                        </div>
+
+                        {{-- Indicador dinámico de stock disponible --}}
+                        <small id="stock-help" class="text-muted d-block mb-4 fw-semibold" style="font-size: 0.8rem;">
+                            Elegí un talle para ver el stock disponible.
+                        </small>
+
                         {{-- Botones de Acción --}}
-                        <div class="mt-5">
+                        <div class="mt-4">
                             @if ($isAgotado)
                                 <button type="button"
                                     class="btn btn-lg btn-secondary w-100 py-3 fw-bold text-uppercase disabled" disabled>
@@ -187,7 +208,7 @@
                                 </button>
                             @else
                                 <button type="submit"
-                                    class="btn btn-lg w-100 py-3 fw-bold text-uppercase text-white shadow-sm"
+                                    class="btn btn-lg w-100 py-3 fw-bold text-uppercase text-white shadow-sm hover-opacity"
                                     style="background-color: #1a3352;">
                                     <i class="bi bi-bag-plus me-2"></i> Añadir al carrito
                                 </button>
@@ -216,6 +237,51 @@
         function abrirLightbox() {
             document.getElementById('fancy-link-' + fotoActivaIndex).click();
         }
+    </script>
+
+    {{-- SCRIPT PARA ACTUALIZAR EL MAX DEL INPUT CANTIDAD --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const radioTalles = document.querySelectorAll('.input-talle');
+            const inputCantidad = document.getElementById('cantidad');
+            const stockHelp = document.getElementById('stock-help');
+
+            radioTalles.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        const stockDisponible = parseInt(this.getAttribute('data-stock'));
+
+                        // Actualizar el limite máximo permitido en HTML5
+                        inputCantidad.max = stockDisponible;
+
+                        // Si el valor actual es mayor al nuevo stock, ajustarlo automáticamente
+                        if (parseInt(inputCantidad.value) > stockDisponible) {
+                            inputCantidad.value = stockDisponible;
+                        }
+
+                        // Si por algún motivo tenía 0, ponerle mínimo 1
+                        if (parseInt(inputCantidad.value) < 1) {
+                            inputCantidad.value = 1;
+                        }
+
+                        // Actualizar mensaje de ayuda
+                        stockHelp.textContent = `Disponible: ${stockDisponible} u.`;
+                        stockHelp.classList.remove('text-muted', 'text-danger');
+                        stockHelp.classList.add('text-success');
+                    }
+                });
+            });
+
+            // Validar también si escribe manualmente un número superior al stock
+            inputCantidad.addEventListener('input', function() {
+                const max = parseInt(this.max);
+                const val = parseInt(this.value);
+
+                if (val > max) {
+                    this.value = max;
+                }
+            });
+        });
     </script>
 
     <style>

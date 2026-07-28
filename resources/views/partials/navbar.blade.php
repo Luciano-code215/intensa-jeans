@@ -223,11 +223,28 @@
                 </ul>
             </div>
 
-            {{-- 3. Icono del Carrito --}}
-            <a href="#" class="text-secondary hover-denim position-relative">
-                <i class="bi bi-bag-heart"></i>
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-circle bg-oro text-denim"
-                    style="font-size: 0.6rem; padding: 0.25em 0.45em;">0</span>
+            {{-- Icono del Carrito --}}
+            @php
+                $cart = session()->get('cart', []);
+                $cantTotal = array_sum(array_column($cart, 'cantidad'));
+            @endphp
+
+            <a href="{{ route('carrito.index') }}" class="text-secondary hover-denim position-relative"
+                title="Ver Carrito">
+                <i class="bi bi-bag-heart fs-4"></i>
+                @if ($cantTotal > 0)
+                    <span
+                        class="position-absolute top-0 start-100 translate-middle badge rounded-circle bg-oro text-denim fw-bold"
+                        style="font-size: 0.65rem; padding: 0.3em 0.5em;">
+                        {{ $cantTotal }}
+                    </span>
+                @else
+                    <span
+                        class="position-absolute top-0 start-100 translate-middle badge rounded-circle bg-secondary text-white"
+                        style="font-size: 0.6rem; padding: 0.25em 0.45em;">
+                        0
+                    </span>
+                @endif
             </a>
 
         </div>

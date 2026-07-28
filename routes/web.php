@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TalleController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\UsuariosController;
+use App\Http\Controllers\CartController;
 
 Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
@@ -22,6 +23,18 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');//para ver la vista
 Route::post('/register', [AuthController::class, 'register']);
 
+
+//--------RUTAS DE USUARIO-----------------
+Route::middleware('auth')->group(function () {
+
+    Route::prefix('carrito')->name('carrito.')->group(function () {
+        Route::get('/', [CartController::class, 'index'])->name('index');
+        Route::post('/agregar/{id}', [CartController::class, 'add'])->name('add');
+        Route::post('/actualizar/{id}', [CartController::class, 'update'])->name('update');
+        Route::post('/eliminar/{id}', [CartController::class, 'remove'])->name('remove');
+        Route::post('/vaciar', [CartController::class, 'clear'])->name('clear');
+    });
+});
 
 //--------RUTAS DE ADMINISTRADOR-----------------
 

@@ -98,4 +98,11 @@ class Producto extends Model
     {
         return $this->talles()->sum('stock');
     }
+
+    public function stockPorTalle(string $nombreTalle): int
+    {
+        $talle = $this->talles->where('nombre', $nombreTalle)->first();
+
+        return $talle ? (int) $talle->pivot->stock : 0;
+    }
 }
