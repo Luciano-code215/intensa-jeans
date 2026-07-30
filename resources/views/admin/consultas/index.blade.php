@@ -51,17 +51,16 @@
                 </div>
             </div>
 
-            <!-- Respondidas -->
+            <!-- Leídas -->
             <div class="col-12 col-md-4">
                 <div class="p-4 rounded-4 position-relative overflow-hidden shadow-sm text-white d-flex flex-column justify-content-between"
                     style="background-color: #0dcaf0; min-height: 150px;">
                     <div>
                         <span class="text-uppercase fw-bold tracking-wider lh-1"
-                            style="font-size: 0.78rem; letter-spacing: 0.5px; opacity: 0.9;">Respondidas</span>
-                        <h1 class="fw-bold my-1 display-5 lh-1">{{ \App\Models\Consulta::cantRespondidas() }}</h1>
+                            style="font-size: 0.78rem; letter-spacing: 0.5px; opacity: 0.9;">Leídas</span>
+                        <h1 class="fw-bold my-1 display-5 lh-1">{{ \App\Models\Consulta::cantLeidas() }}</h1>
                     </div>
-                    <p class="small mb-0 opacity-75 fw-medium" style="font-size: 0.85rem;">Consultas atendidas correctamente
-                    </p>
+                    <p class="small mb-0 opacity-75 fw-medium" style="font-size: 0.85rem;">Consultas leídas</p>
                     <i class="bi bi-check-all position-absolute end-0 bottom-0 mb-2 me-2 opacity-25"
                         style="font-size: 4rem; line-height: 1; pointer-events: none;"></i>
                 </div>
@@ -85,8 +84,8 @@
                         <option value="pendientes" {{ request('filtro_cuenta') == 'pendientes' ? 'selected' : '' }}>
                             Mostrar solo pendientes
                         </option>
-                        <option value="respondidas" {{ request('filtro_cuenta') == 'respondidas' ? 'selected' : '' }}>
-                            Mostrar solo respondidas
+                        <option value="leidas" {{ request('filtro_cuenta') == 'leidas' ? 'selected' : '' }}>
+                            Mostrar solo leídas
                         </option>
 
                     </select>
@@ -119,18 +118,28 @@
                                 <td class="text-muted small">
                                     {{ $consulta->created_at ? $consulta->created_at->format('d/m/Y H:i') : '-' }}</td>
                                 <td>
-                                    <span
-                                        class="badge bg-success px-2.5 py-1.5 rounded-2 d-inline-flex align-items-center gap-1"
-                                        style="font-size: 0.8rem; background-color: #198754 !important;">
-                                        <i class="bi bi-check-circle-fill" style="font-size: 0.75rem;"></i> Respondida
-                                    </span>
+                                    @if ($consulta->estado === 'pendiente')
+                                        <span
+                                            class="badge bg-warning text-dark px-2.5 py-1.5 rounded-2 d-inline-flex align-items-center gap-1"
+                                            style="font-size: 0.8rem;">
+                                            <i class="bi bi-envelope" style="font-size: 0.75rem;"></i> Pendiente
+                                        </span>
+                                    @else
+                                        <span
+                                            class="badge bg-success px-2.5 py-1.5 rounded-2 d-inline-flex align-items-center gap-1"
+                                            style="font-size: 0.8rem; background-color: #198754 !important;">
+                                            <i class="bi bi-check-circle-fill" style="font-size: 0.75rem;"></i> Leído
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="text-center">
                                     {{-- BOTÓN QUE ABRE EL MODAL --}}
                                     <button type="button"
-                                        class="btn btn-secondary btn-sm rounded-3 px-3 py-1.5 d-inline-flex align-items-center gap-1 fw-medium"
+                                        class="btn btn-secondary btn-sm rounded-3 px-3 py-1.5 d-inline-flex align-items-center gap-1 fw-medium btn-ver-consulta"
                                         style="background-color: #6c757d; font-size: 0.85rem; border: 0;"
-                                        data-bs-toggle="modal" data-bs-target="#modalConsulta{{ $consulta->id }}">
+                                        data-bs-toggle="modal" data-bs-target="#modalConsulta{{ $consulta->id }}"
+                                        data-consulta-id="{{ $consulta->id }}"
+                                        data-estado="{{ $consulta->estado }}">
                                         <i class="bi bi-eye-fill"></i> Ver mensaje
                                     </button>
                                 </td>
@@ -223,4 +232,24 @@
             box-shadow: none !important;
         }
     </style>
+
+    <script>
+        document.querySelectorAll('.btn-ver-consulta').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = this.getAttribute('data-consulta-id');
+                const estado = this.getAttribute('data-estado');
+                if (estado === 'pendiente') {
+                    fetch('{{ url('admin/consultas') }}/' + id + '/leido', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Content-Type': 'application/json',
+                        }
+                    }).then(() => {
+                        location.reload();
+                    });
+                }
+            });
+        });
+    </script>
 @endsection

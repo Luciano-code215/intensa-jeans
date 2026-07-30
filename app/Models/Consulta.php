@@ -18,9 +18,9 @@ class Consulta extends Model
         return self::where('estado', 'pendiente')->count();
     }
 
-    public static function cantRespondidas()
+    public static function cantLeidas()
     {
-        return self::where('estado', 'respondida')->count();
+        return self::where('estado', 'leido')->count();
     }
 
     public static function total()

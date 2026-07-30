@@ -113,10 +113,13 @@
                             @endif
                         </div>
 
-                        <p class="text-muted small mb-3">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Al confirmar, se generará tu pedido y te enviaremos los datos para coordinar el pago y envío por WhatsApp.
-                        </p>
+                        <div class="bg-light rounded-3 p-3 mb-3 border">
+                            <p class="fw-bold text-denim small mb-2"><i class="bi bi-info-circle me-1"></i> Así trabajamos:</p>
+                            <p class="text-muted small mb-1">🔹 No procesamos pagos automáticos en la web.</p>
+                            <p class="text-muted small mb-1">🔹 Una vez que confirmes tu pedido, te contactamos por WhatsApp.</p>
+                            <p class="text-muted small mb-1">🔹 Coordinamos el método de pago (efectivo, transferencia o tarjeta) y el envío.</p>
+                            <p class="text-muted small mb-0">🔹 Tu pedido queda registrado y el dueño recibe una notificación automática.</p>
+                        </div>
 
                         <button type="submit"
                             class="btn btn-lg w-100 py-3 fw-bold rounded-3 text-white text-uppercase shadow-sm mb-2"

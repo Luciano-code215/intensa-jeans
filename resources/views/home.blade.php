@@ -4,22 +4,30 @@
 
 @section('content')
 
-    <div class="w-100 p-0 overflow-hidden shadow-sm">
+    <div class="position-relative w-100 p-0 overflow-hidden shadow-sm">
 
         <div class="d-none d-md-block w-100">
             <a href="#">
-                <img src="{{ asset('images/banner1.jpeg') }}" alt="Gran Lanzamiento - Intensa Jeans"
+                <img src="{{ asset('images/banner1.jpeg') }}?v={{ time() }}" alt="Gran Lanzamiento - Intensa Jeans"
                     class="img-fluid w-100 h-auto" style="object-fit: cover;">
             </a>
         </div>
 
         <div class="d-block d-md-none w-100">
             <a href="#">
-                <img src="{{ asset('images/banner1-mobile.jpg') }}" alt="Promo Lanzamiento Jeans - Intensa"
+                <img src="{{ asset('images/banner1-mobile.jpg') }}?v={{ time() }}" alt="Promo Lanzamiento Jeans - Intensa"
                     class="img-fluid w-100 h-auto">
             </a>
         </div>
 
+        @auth
+            @if (Auth::user()->admin ?? false)
+                <a href="{{ route('admin.banner') }}"
+                    class="position-absolute top-0 end-0 m-2 btn btn-sm btn-dark bg-opacity-75 rounded-3 px-3">
+                    <i class="bi bi-pencil-square me-1"></i> Editar banner
+                </a>
+            @endif
+        @endauth
     </div>
 
     <div class="bg-denim text-white py-4 border-top border-secondary-subtle">
@@ -134,9 +142,14 @@
 
                                                     <div
                                                         class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
-                                                        <span class="fw-bold text-success fs-5">
-                                                            ${{ number_format($producto->precio, 0, ',', '.') }}
-                                                        </span>
+                                                        <div>
+                                                            @if ($producto->liquidacion && $producto->porc_liquidacion > 0)
+                                                                <span class="text-muted text-decoration-line-through small me-1">${{ number_format($producto->precio, 0, ',', '.') }}</span>
+                                                            @endif
+                                                            <span class="fw-bold text-success fs-5">
+                                                                ${{ number_format($producto->precio_lista_actual, 0, ',', '.') }}
+                                                            </span>
+                                                        </div>
                                                         <a href="{{ route('productos.show', $producto->id) }}"
                                                             class="btn btn-outline-dark btn-sm rounded-3 px-3">
                                                             Ver detalle

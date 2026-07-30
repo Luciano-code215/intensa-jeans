@@ -80,12 +80,53 @@
         @yield('content')
     </main>
 
-    <footer class="bg-denim text-white text-center py-5 mt-5 border-top border-4 border-warning"
+    <footer class="bg-denim text-white mt-5 border-top border-4 border-warning pt-5 pb-4"
         style="border-color: #d4af37 !important;">
         <div class="container">
-            <p class="font-titulo italic fs-4 text-oro mb-2">"Jeans que realzan tu esencia"</p>
-            <p class="small text-white-50 mb-0">&copy; {{ date('Y') }} Intensa Jeans. Todos los derechos reservados.
-            </p>
+            <div class="row g-4">
+
+                <div class="col-md-4 text-center text-md-start">
+                    <h5 class="fw-bold text-oro mb-3 font-titulo">Intensa Jeans</h5>
+                    <p class="small text-white-50 lh-lg mb-0">
+                        Jeans que realzan tu esencia. Calidad, estilo y confianza desde Corrientes, Argentina.
+                    </p>
+                </div>
+
+                <div class="col-md-4 text-center">
+                    <h6 class="fw-bold text-uppercase small mb-3 tracking-wider text-white-50">Enlaces</h6>
+                    <ul class="list-unstyled small lh-lg">
+                        <li><a href="{{ url('/') }}" class="text-white-50 text-decoration-none">Inicio</a></li>
+                        <li><a href="{{ route('catalogo.index') }}" class="text-white-50 text-decoration-none">Catálogo</a></li>
+                        <li><a href="{{ route('pagina.quienes-somos') }}" class="text-white-50 text-decoration-none">Quiénes Somos</a></li>
+                        <li><a href="{{ route('pagina.como-comprar') }}" class="text-white-50 text-decoration-none">Cómo Comprar</a></li>
+                        <li><a href="{{ route('pagina.terminos') }}" class="text-white-50 text-decoration-none">Términos y Condiciones</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-md-4 text-center text-md-end">
+                    <h6 class="fw-bold text-uppercase small mb-3 tracking-wider text-white-50">Seguinos</h6>
+                    <div class="d-flex justify-content-center justify-content-md-end gap-3 fs-4 mb-3">
+                        <a href="https://instagram.com/intensa.ok" target="_blank" class="text-white-50 text-decoration-none"><i class="bi bi-instagram"></i></a>
+                        <a href="https://wa.me/543795016705" target="_blank" class="text-white-50 text-decoration-none"><i class="bi bi-whatsapp"></i></a>
+                        <a href="https://facebook.com/intensa.ok" target="_blank" class="text-white-50 text-decoration-none"><i class="bi bi-facebook"></i></a>
+                    </div>
+                    <p class="small text-white-50 mb-0">
+                        <i class="bi bi-geo-alt me-1"></i> Corrientes, Argentina
+                    </p>
+                </div>
+
+            </div>
+
+            <hr class="border-secondary border-opacity-25 my-4">
+
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                <p class="small text-white-50 mb-0">
+                    &copy; {{ date('Y') }} Intensa Jeans. Todos los derechos reservados.
+                </p>
+                <p class="small text-white-50 mb-0">
+                    Desarrollado con ❤️ por <a href="#" class="text-white-50 text-decoration-none" title="Contactar desarrollador">Lucía</a>
+                </p>
+            </div>
         </div>
     </footer>
 

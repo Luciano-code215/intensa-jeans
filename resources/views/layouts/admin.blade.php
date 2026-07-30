@@ -102,6 +102,12 @@
                         <i class="bi bi-chat-left-text"></i> Consultas
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white hover-sidebar rounded-3 py-2 px-3 d-flex align-items-center gap-2 {{ Request::is('admin/banner') ? 'bg-white bg-opacity-10 text-white' : 'text-white-50' }}"
+                        href="{{ route('admin.banner') }}" onclick="cerrarOffcanvas()">
+                        <i class="bi bi-images"></i> Banner
+                    </a>
+                </li>
                 <li class="nav-item mt-3">
                     <a class="nav-link text-white-50 hover-sidebar rounded-3 py-1.5 px-3 d-flex align-items-center gap-2 small"
                         href="{{ url('/') }}" onclick="cerrarOffcanvas()">
@@ -170,6 +176,12 @@
                         <a class="nav-link text-white hover-sidebar rounded-3 py-2.5 px-3 d-flex align-items-center gap-2 {{ Request::is('admin/consultas*') ? 'bg-white bg-opacity-10 text-white' : 'text-white-50' }}"
                             href="{{ route('admin.consultas.index') }}">
                             <i class="bi bi-chat-left-text"></i> Consultas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white hover-sidebar rounded-3 py-2.5 px-3 d-flex align-items-center gap-2 {{ Request::is('admin/banner') ? 'bg-white bg-opacity-10 text-white' : 'text-white-50' }}"
+                            href="{{ route('admin.banner') }}">
+                            <i class="bi bi-images"></i> Banner
                         </a>
                     </li>
                     <li class="nav-item mt-4">

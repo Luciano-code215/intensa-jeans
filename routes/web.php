@@ -50,9 +50,7 @@ Route::get('/checkout/confirmacion/{id}', [App\Http\Controllers\CheckoutControll
 
 Route::middleware(['auth', 'admin'])->group(function () {
 
-    Route::get('/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/admin/categorias', [CategoriaController::class, 'index'])->name('admin.categorias.index');
 
@@ -74,12 +72,15 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/ventas/extracto', [App\Http\Controllers\VentasController::class, 'extracto'])->name('admin.ventas.extracto');
     Route::get('/admin/ventas/mostrador', [App\Http\Controllers\VentasController::class, 'mostrador'])->name('admin.ventas.mostrador');
     Route::post('/admin/ventas/mostrador/guardar', [App\Http\Controllers\VentasController::class, 'guardarVentaMostrador'])->name('admin.ventas.guardarVentaMostrador');
-    Route::get('/admin/ventas/{id}/editar', [App\Http\Controllers\VentasController::class, 'editar'])->name('admin.ventas.editar');
-    Route::post('/admin/ventas/{id}/editar', [App\Http\Controllers\VentasController::class, 'actualizarItems'])->name('admin.ventas.actualizar-items');
     Route::post('/admin/ventas/{id}/cambiar-estado', [App\Http\Controllers\VentasController::class, 'cambiarEstado'])->name('admin.ventas.cambiar-estado');
     Route::get('/admin/ventas/{id}/ticket', [App\Http\Controllers\VentasController::class, 'ticket'])->name('admin.ventas.ticket');
+    Route::get('/admin/ventas/{id}/detalle', [App\Http\Controllers\VentasController::class, 'detalle'])->name('admin.ventas.detalle');
 
     Route::get('/admin/consultas', [App\Http\Controllers\ConsultasController::class, 'index'])->name('admin.consultas.index');
+    Route::post('/admin/consultas/{id}/leido', [App\Http\Controllers\ConsultasController::class, 'marcarLeido'])->name('admin.consultas.leido');
+
+    Route::get('/admin/banner', [App\Http\Controllers\BannerController::class, 'edit'])->name('admin.banner');
+    Route::post('/admin/banner', [App\Http\Controllers\BannerController::class, 'update'])->name('admin.banner.update');
 
     Route::get('/admin/productos/create', [ProductoController::class, 'create'])->name('admin.productos.create');
 
@@ -95,6 +96,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     Route::post('/admin/productos/{id}/reactivar', [ProductoController::class, 'reactivar'])->name('admin.productos.reactivar');
 });
+
+// PÁGINAS ESTÁTICAS
+Route::view('/quienes-somos', 'paginas.quienes-somos')->name('pagina.quienes-somos');
+Route::view('/como-comprar', 'paginas.como-comprar')->name('pagina.como-comprar');
+Route::view('/terminos', 'paginas.terminos')->name('pagina.terminos');
 
 Route::get('/test-php', function () {
     phpinfo();

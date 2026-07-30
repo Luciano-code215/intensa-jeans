@@ -30,6 +30,12 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
+        @if ($errors->any())
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm mb-4" role="alert">
+                <i class="bi bi-x-circle-fill me-2"></i> {{ $errors->first() }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
 
         {{-- 1. TARJETAS DE MÉTRICAS SUPERIORES --}}
         <div class="row g-3 mb-4">
@@ -116,8 +122,8 @@
         {{-- Botón extracto --}}
         <div class="d-flex justify-content-end mb-3">
             <a href="{{ route('admin.ventas.extracto', request()->only(['estado', 'fecha_inicio', 'fecha_fin', 'buscar'])) }}"
-                class="btn btn-success rounded-3 fw-semibold">
-                <i class="bi bi-file-earmark-bar-graph me-1"></i> Ver Extracto
+                class="btn btn-success rounded-3 fw-semibold" target="_blank">
+                <i class="bi bi-file-earmark-bar-graph me-1"></i> Extracto (imprimible)
             </a>
         </div>
 
@@ -174,18 +180,16 @@
                                     @endif
                                 </td>
                                 <td class="text-end">
-                                    @if (in_array($venta->estado, ['creada', 'pagada', 'entregada']))
+                                    <a href="{{ route('admin.ventas.detalle', $venta->id) }}"
+                                        class="btn btn-outline-primary btn-sm rounded-3 px-3 py-1.5 d-inline-flex align-items-center gap-1"
+                                        style="font-size: 0.85rem;">
+                                        <i class="bi bi-eye"></i> Detalle
+                                    </a>
+                                    @if ($venta->estado === 'pagada')
                                         <a href="{{ route('admin.ventas.ticket', $venta->id) }}"
                                             class="btn btn-outline-secondary btn-sm rounded-3 px-3 py-1.5 d-inline-flex align-items-center gap-1"
                                             style="font-size: 0.85rem;">
                                             <i class="bi bi-receipt"></i> Ticket
-                                        </a>
-                                    @endif
-                                    @if (!$esFinal)
-                                        <a href="{{ route('admin.ventas.editar', $venta->id) }}"
-                                            class="btn btn-outline-primary btn-sm rounded-3 px-3 py-1.5 d-inline-flex align-items-center gap-1"
-                                            style="font-size: 0.85rem;">
-                                            <i class="bi bi-pencil"></i> Editar
                                         </a>
                                     @endif
                                 </td>

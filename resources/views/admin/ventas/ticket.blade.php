@@ -37,10 +37,9 @@
             font-weight: bold;
             font-size: 14px;
             margin: 8px 0;
+            background: #d4edda;
+            color: #155724;
         }
-        .estado-creada { background: #fff3cd; color: #856404; }
-        .estado-pagada { background: #d4edda; color: #155724; }
-        .estado-entregada { background: #cce5ff; color: #004085; }
         table.items {
             width: 100%;
             border-collapse: collapse;
@@ -100,28 +99,25 @@
             </div>
         @endif
         <div class="info-line">
-            <span>Origen:</span>
-            <span>{{ $orden->origen === 'mostrador' ? 'Mostrador' : 'Web' }}</span>
-        </div>
-        @if ($orden->metodo_pago)
-            <div class="info-line">
-                <span>Método de pago:</span>
-                <span>
-                    @php
-                        $mapa = ['efectivo'=>'Efectivo','tarjeta'=>'Tarjeta','transferencia'=>'Transferencia','tarjeta_debito'=>'Tarjeta Débito','tarjeta_credito'=>'Tarjeta Crédito'];
-                    @endphp
-                    {{ $mapa[$orden->metodo_pago] ?? $orden->metodo_pago }}
-                </span>
-            </div>
-        @endif
-
-        <div class="centro">
-            <span class="estado-badge estado-{{ $orden->estado }}">
-                {{ $orden->estado === 'creada' ? 'PENDIENTE' : strtoupper($orden->estado) }}
+            <span>Método de pago:</span>
+            <span>
+                @php
+                    $mapa = ['efectivo'=>'Efectivo','tarjeta'=>'Tarjeta','transferencia'=>'Transferencia','tarjeta_debito'=>'Tarjeta Débito','tarjeta_credito'=>'Tarjeta Crédito'];
+                @endphp
+                {{ $mapa[$orden->metodo_pago] ?? $orden->metodo_pago ?? '—' }}
             </span>
         </div>
 
+        <div class="centro">
+            <span class="estado-badge">PAGADA</span>
+        </div>
+
         <div class="linea"></div>
+
+        @php
+            $totalItems = 0;
+            $totalDescuento = 0;
+        @endphp
 
         <table class="items">
             <thead>
@@ -134,12 +130,24 @@
             </thead>
             <tbody>
                 @foreach ($orden->items as $item)
+                    @php
+                        $totalItems += $item->subtotal;
+                        $precioConDescuento = $item->precio_unitario;
+                        $producto = $item->producto;
+                        $porcDesc = $producto ? (int) $producto->porc_desc_ef : 0;
+                        $precioEf = $porcDesc > 0 ? $item->precio_unitario * (1 - $porcDesc / 100) : $item->precio_unitario;
+                        $descItem = ($item->precio_unitario - $precioEf) * $item->cantidad;
+                        $totalDescuento += $descItem;
+                    @endphp
                     <tr>
                         <td class="cant">{{ $item->cantidad }}</td>
                         <td class="desc">
                             {{ $item->producto->nombre ?? 'Producto' }}
                             @if ($item->talle)
                                 <br><small style="color:#888;">Talle: {{ $item->talle }}</small>
+                            @endif
+                            @if ($descItem > 0)
+                                <br><small style="color:#dc3545;">-${{ number_format($item->precio_unitario - $precioEf, 0, ',', '.') }} c/u</small>
                             @endif
                         </td>
                         <td class="precio">${{ number_format($item->precio_unitario, 0, ',', '.') }}</td>
@@ -150,8 +158,18 @@
             <tfoot>
                 <tr class="total-row">
                     <td colspan="3" style="text-align: right;">TOTAL</td>
-                    <td class="subtotal">${{ number_format($orden->total, 0, ',', '.') }}</td>
+                    <td class="subtotal">${{ number_format($totalItems, 0, ',', '.') }}</td>
                 </tr>
+                @if ($totalDescuento > 0)
+                    <tr>
+                        <td colspan="3" style="text-align: right; color: #28a745;">Descuento</td>
+                        <td class="subtotal" style="color: #28a745;">-${{ number_format($totalDescuento, 0, ',', '.') }}</td>
+                    </tr>
+                    <tr style="font-weight: bold; font-size: 16px;">
+                        <td colspan="3" style="text-align: right;">TOTAL PAGADO</td>
+                        <td class="subtotal">${{ number_format($totalItems - $totalDescuento, 0, ',', '.') }}</td>
+                    </tr>
+                @endif
             </tfoot>
         </table>
 
@@ -165,14 +183,12 @@
         <div class="centro no-print" style="margin-top: 16px;">
             <button onclick="window.print()"
                 style="padding: 10px 32px; border: none; border-radius: 6px; background: #1a3352; color: #fff; font-weight: bold; cursor: pointer;">
-                <i class="bi bi-printer"></i> Imprimir
+                Imprimir
             </button>
             <br><br>
-            <a href="{{ route('admin.ventas.index') }}"
-                style="color: #1a3352; font-size: 12px;">← Volver a ventas</a>
+            <a href="{{ route('admin.ventas.index') }}" style="color: #1a3352; font-size: 12px;">← Volver a ventas</a>
         </div>
     </div>
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </body>
 </html>

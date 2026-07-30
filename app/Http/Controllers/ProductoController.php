@@ -136,57 +136,61 @@ class ProductoController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. VALIDACIÓN ADAPTADA CON NUEVOS CAMPOS
         $request->validate([
             'nombre' => 'required|string|max:255',
             'precio' => 'required|numeric|min:0',
-            'porc_desc_ef' => 'nullable|integer|min:0|max:100', // Descuento efectivo/transferencia
-            'liquidacion' => 'nullable|boolean',                 // Checkbox de liquidación
-            'porc_liquidacion' => 'nullable|integer|min:0|max:100', // % de liquidación
+            'porc_desc_ef' => 'nullable|integer|min:0|max:100',
+            'liquidacion' => 'nullable|boolean',
+            'porc_liquidacion' => 'nullable|integer|min:0|max:100',
             'categoria_id' => 'required|exists:categorias,id',
             'descripcion' => 'nullable|string',
-            'sku' => 'nullable|unique:productos,sku|string|max:100',
+            'sku' => 'nullable|string|max:100',
             'imagenes' => 'required|array|min:1',
-            'imagenes.*' => 'image|mimes:jpeg,png,jpg,webp|max:6144', // Max 6MB por Herd
+            'imagenes.*' => 'image|mimes:jpeg,png,jpg,webp|max:6144',
             'talles' => 'required|array',
         ]);
 
-        // Mapeamos los datos base para el modelo
+        // Si el SKU ya existe, sumamos stock en vez de rechazar
+        if ($request->filled('sku')) {
+            $existente = Producto::with('talles')->where('sku', $request->sku)->first();
+            if ($existente) {
+                foreach ($request->talles as $talleId => $stock) {
+                    $stockActual = (int) ($existente->talles()->where('talles.id', $talleId)->first()?->pivot->stock ?? 0);
+                    $nuevoStock = $stockActual + (int) ($stock['stock'] ?? 0);
+                    $existente->talles()->syncWithoutDetaching([$talleId => ['stock' => $nuevoStock]]);
+                }
+                return redirect()->route('admin.productos.index')->with('success', "El SKU \"{$request->sku}\" ya existe. Se agregó el stock al producto existente \"{$existente->nombre}\".");
+            }
+        }
+
         $data = $request->only(['nombre', 'precio', 'categoria_id', 'descripcion', 'sku']);
         $data['activo'] = true;
 
-        // Procesamos el estado de liquidación
         $esLiquidacion = $request->has('liquidacion');
         $data['liquidacion'] = $esLiquidacion;
         $data['porc_liquidacion'] = $esLiquidacion ? ($request->porc_liquidacion ?? 0) : 0;
 
-        // Guardamos el porcentaje de descuento efectivo
         $porcDescEf = $request->porc_desc_ef ?? 0;
         $data['porc_desc_ef'] = $porcDescEf;
 
-        // --- MATEMÁTICA COMERCIAL PARA EL PRECIO EFECTIVO ---
         $precioOriginal = $request->precio;
 
-        // A. Si está en liquidación, el precio de lista base baja
         if ($esLiquidacion && $data['porc_liquidacion'] > 0) {
             $precioBaseParaEfectivo = $precioOriginal - ($precioOriginal * ($data['porc_liquidacion'] / 100));
         } else {
             $precioBaseParaEfectivo = $precioOriginal;
         }
 
-        // B. El precio final en efectivo se calcula aplicando el desc. de transferencia sobre el precio base obtenido
         $data['precio_ef'] = $precioBaseParaEfectivo - ($precioBaseParaEfectivo * ($porcDescEf / 100));
 
-        // Generación de SKU por si vino vacío
         if (empty($data['sku'])) {
-            $data['sku'] = 'INT' . rand(1000, 9000);
+            do {
+                $data['sku'] = 'INT' . rand(1000, 99999);
+            } while (Producto::where('sku', $data['sku'])->exists());
         }
 
-        // 2. PROCESAR LA GALERÍA DE IMÁGENES
         if ($request->hasFile('imagenes')) {
             $imagenes = $request->file('imagenes');
-
-            // Guardamos la primera imagen como la portada principal
             $fotoPrincipal = $imagenes[0];
             $rutaPrincipal = $fotoPrincipal->store('productos', 'public');
             $data['url_imagen'] = 'storage/' . $rutaPrincipal;
@@ -196,10 +200,8 @@ class ProductoController extends Controller
             ])->withInput();
         }
 
-        // Creamos el producto base con todos los datos procesados
         $producto = Producto::create($data);
 
-        // Guardamos el resto de las imágenes (a partir de la segunda)
         if (isset($imagenes) && count($imagenes) > 1) {
             for ($i = 1; $i < count($imagenes); $i++) {
                 if ($imagenes[$i]->isValid()) {
