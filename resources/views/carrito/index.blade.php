@@ -157,22 +157,20 @@
                         </div>
 
                         {{-- Caja Promocional Efectivo --}}
-                        @php
-                            // Ejemplo: 10% de descuento abonando en efectivo/transferencia
-                            $descuentoEfectivo = 0.1;
-                            $totalEfectivo = $total * (1 - $descuentoEfectivo);
-                        @endphp
-
                         <div class="card border-success bg-success-subtle p-3 rounded-3 mb-4">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <span class="fw-bold text-success small">Precio en Efectivo / Transferencia:</span>
-                                <span class="badge bg-success text-white">10% OFF</span>
+                                @if ($ahorro > 0)
+                                    <span class="badge bg-success text-white">AHORRÁS</span>
+                                @endif
                             </div>
                             <div class="fs-3 fw-bold text-success">
                                 ${{ number_format($totalEfectivo, 0, ',', '.') }}
                             </div>
-                            <span class="text-success-emphasis" style="font-size: 0.75rem;">¡Ahorrás
-                                ${{ number_format($total - $totalEfectivo, 0, ',', '.') }}!</span>
+                            @if ($ahorro > 0)
+                                <span class="text-success-emphasis" style="font-size: 0.75rem;">¡Ahorrás
+                                    ${{ number_format($ahorro, 0, ',', '.') }}!</span>
+                            @endif
                         </div>
 
                         <hr class="text-muted my-3">
@@ -200,7 +198,10 @@
                                     "\n";
                             }
                             $mensaje .= "\n*Total Lista:* $" . number_format($total, 0, ',', '.');
-                            $mensaje .= "\n*Total Efectivo (10% OFF):* $" . number_format($totalEfectivo, 0, ',', '.');
+                            $mensaje .= "\n*Total Efectivo:* $" . number_format($totalEfectivo, 0, ',', '.');
+                            if ($ahorro > 0) {
+                                $mensaje .= "\n*Ahorro:* $" . number_format($ahorro, 0, ',', '.');
+                            }
 
                             $urlWhatsapp = 'https://wa.me/543795016705?text=' . urlencode($mensaje);
                         @endphp
@@ -210,12 +211,12 @@
                             <i class="bi bi-whatsapp fs-4"></i> Pedir por WhatsApp
                         </a>
 
-                        {{-- OPCIÓN 2: Checkout / Iniciar Pago en la Web (Si lo usas en el futuro) --}}
-                        <button type="button"
-                            class="btn btn-lg w-100 py-3 fw-bold rounded-3 text-white text-uppercase shadow-sm"
+                        {{-- OPCIÓN 2: Finalizar Compra (lleva al checkout) --}}
+                        <a href="{{ route('checkout.index') }}"
+                            class="btn btn-lg w-100 py-3 fw-bold rounded-3 text-white text-uppercase shadow-sm d-flex align-items-center justify-content-center gap-2"
                             style="background-color: #1a3352;">
-                            Finalizar Compra Web
-                        </button>
+                            <i class="bi bi-credit-card fs-5"></i> Finalizar Compra
+                        </a>
 
                     </div>
                 </div>

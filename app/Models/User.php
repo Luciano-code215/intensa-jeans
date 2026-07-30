@@ -33,12 +33,13 @@ class User extends Authenticatable
         ];
     }
 
-    static function registrarUsuario($name, $email, $password, $role = 'user')
+    static function registrarUsuario($name, $email, $password, $telefono = null, $role = 'user')
     {
         return self::create([
             'name' => $name,
             'email' => $email,
             'password' => $password,
+            'telefono' => $telefono,
             'role' => $role,
             'activo' => true,
         ]);

@@ -7,25 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ItemOrden extends Model
 {
     protected $table = 'item_ordenes';
-    protected $fillable = ['orden_id', 'producto_id', 'cantidad', 'precio_unitario', 'subtotal'];
-
-    protected static function booted()
-    {
-        static::creating(function ($item) {
-            // Buscamos el producto para extraer su precio_final vigente
-            $producto = Producto::find($item->producto_id);
-
-            if ($producto) {
-                $item->precio_unitario = $producto->precio_final;
-                $item->subtotal = $item->precio_unitario * $item->cantidad;
-            }
-        });
-
-        // Al guardarse un ítem con éxito, recalculamos el total general de la Orden madre
-        static::created(function ($item) {
-            $item->orden->calcularTotal();
-        });
-    }
+    protected $fillable = ['orden_id', 'producto_id', 'talle', 'cantidad', 'precio_unitario', 'subtotal'];
 
     public function orden()
     {
@@ -35,5 +17,18 @@ class ItemOrden extends Model
     public function producto()
     {
         return $this->belongsTo(Producto::class);
+    }
+
+    public function getPrecioEfectivoAttribute()
+    {
+        $porcDesc = $this->producto ? $this->producto->porc_desc_ef : 0;
+        return $porcDesc > 0
+            ? $this->precio_unitario * (1 - $porcDesc / 100)
+            : $this->precio_unitario;
+    }
+
+    public function getSubtotalEfectivoAttribute()
+    {
+        return $this->precio_efectivo * $this->cantidad;
     }
 }

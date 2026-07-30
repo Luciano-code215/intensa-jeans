@@ -30,6 +30,19 @@
                             @enderror
                         </div>
 
+                        {{-- Teléfono --}}
+                        <div class="mb-3">
+                            <label for="telefono" class="form-label small fw-semibold text-secondary">Teléfono</label>
+                            <input type="tel" name="telefono" id="telefono"
+                                class="form-control rounded-3 py-2 @error('telefono') is-invalid @enderror"
+                                value="{{ old('telefono') }}" placeholder="+54 379 500-0000">
+                            @error('telefono')
+                                <span class="invalid-feedback small" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
+                        </div>
+
                         {{-- Email --}}
                         <div class="mb-3">
                             <label for="email" class="form-label small fw-semibold text-secondary">Correo

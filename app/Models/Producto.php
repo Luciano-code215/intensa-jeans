@@ -85,13 +85,18 @@ class Producto extends Model
 
     public function tieneDescuento()
     {
-        return $this->porc_desc > 0; // Consideramos que tiene descuento si el porcentaje de descuento es mayor a 0
+        return $this->porc_liquidacion > 0; // Consideramos que tiene descuento si el porcentaje de liquidación es mayor a 0
     }
 
     // Un producto tiene muchas imágenes secundarias
     public function imagenesSecundarias()
     {
         return $this->hasMany(ImagenProducto::class, 'producto_id');
+    }
+
+    public function getStockAttribute()
+    {
+        return $this->stockTotal();
     }
 
     public function stockTotal()

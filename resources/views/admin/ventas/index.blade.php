@@ -17,6 +17,20 @@
             </div>
         </div>
 
+        {{-- Alertas flash --}}
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm mb-4" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         {{-- 1. TARJETAS DE MÉTRICAS SUPERIORES --}}
         <div class="row g-3 mb-4">
             <!-- Pendientes de Envío -->
@@ -99,6 +113,14 @@
             </form>
         </div>
 
+        {{-- Botón extracto --}}
+        <div class="d-flex justify-content-end mb-3">
+            <a href="{{ route('admin.ventas.extracto', request()->only(['estado', 'fecha_inicio', 'fecha_fin', 'buscar'])) }}"
+                class="btn btn-success rounded-3 fw-semibold">
+                <i class="bi bi-file-earmark-bar-graph me-1"></i> Ver Extracto
+            </a>
+        </div>
+
         {{-- 3. TABLA: ÚLTIMAS TRANSACCIONES REGISTRADAS --}}
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
             <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
@@ -124,29 +146,48 @@
                             <tr class="border-bottom border-light">
                                 <td class="fw-bold text-dark">#{{ $venta->id }}</td>
                                 <td class="text-capitalize text-secondary">
-                                    {{ optional($venta->user)->name ?? ($venta->nombre ?? 'N/A') }}</td>
+                                    {{ optional($venta->user)->name ?? $venta->nombre_contacto ?? 'N/A' }}</td>
                                 <td class="text-muted">
                                     {{ $venta->created_at ? $venta->created_at->format('d/m/Y H:i') : '-' }}</td>
                                 <td class="fw-bold text-dark">${{ number_format($venta->total, 0, ',', '.') }}</td>
                                 <td>
-                                    <select
-                                        class="form-select form-select-sm rounded-3 fw-medium bg-light bg-opacity-70 text-dark border-0 py-1.5 px-3">
-                                        <option value="creada" {{ $venta->estado === 'creada' ? 'selected' : '' }}>Creada
-                                        </option>
-                                        <option value="pagada" {{ $venta->estado === 'pagada' ? 'selected' : '' }}>Pagada
-                                        </option>
-                                        <option value="entregada" {{ $venta->estado === 'entregada' ? 'selected' : '' }}>
-                                            Entregada</option>
-                                        <option value="cancelada" {{ $venta->estado === 'cancelada' ? 'selected' : '' }}>
-                                            Cancelada</option>
-                                    </select>
+                                    @php $esFinal = in_array($venta->estado, ['entregada', 'cancelada']); @endphp
+                                    @if ($esFinal)
+                                        <span class="badge rounded-pill px-3 py-2
+                                            {{ $venta->estado === 'entregada' ? 'bg-success' : 'bg-danger' }}">
+                                            {{ ucfirst($venta->estado) }}
+                                        </span>
+                                    @else
+                                        <form action="{{ route('admin.ventas.cambiar-estado', $venta->id) }}" method="POST"
+                                            class="d-inline cambio-estado-form">
+                                            @csrf
+                                            <input type="hidden" name="metodo_pago" value="">
+                                            <select name="estado"
+                                                class="form-select form-select-sm rounded-3 fw-medium bg-light bg-opacity-70 text-dark border-0 py-1.5 px-3 select-cambio-estado"
+                                                data-orden-id="{{ $venta->id }}">
+                                                <option value="creada" {{ $venta->estado === 'creada' ? 'selected' : '' }}>Creada</option>
+                                                <option value="pagada" {{ $venta->estado === 'pagada' ? 'selected' : '' }}>Pagada</option>
+                                                <option value="entregada" {{ $venta->estado === 'entregada' ? 'selected' : '' }}>Entregada</option>
+                                                <option value="cancelada" {{ $venta->estado === 'cancelada' ? 'selected' : '' }}>Cancelada</option>
+                                            </select>
+                                        </form>
+                                    @endif
                                 </td>
                                 <td class="text-end">
-                                    <a href="#"
-                                        class="btn btn-outline-secondary btn-sm rounded-3 px-3 py-1.5 d-inline-flex align-items-center gap-1"
-                                        style="font-size: 0.85rem;">
-                                        <i class="bi bi-eye"></i> Detalle
-                                    </a>
+                                    @if (in_array($venta->estado, ['creada', 'pagada', 'entregada']))
+                                        <a href="{{ route('admin.ventas.ticket', $venta->id) }}"
+                                            class="btn btn-outline-secondary btn-sm rounded-3 px-3 py-1.5 d-inline-flex align-items-center gap-1"
+                                            style="font-size: 0.85rem;">
+                                            <i class="bi bi-receipt"></i> Ticket
+                                        </a>
+                                    @endif
+                                    @if (!$esFinal)
+                                        <a href="{{ route('admin.ventas.editar', $venta->id) }}"
+                                            class="btn btn-outline-primary btn-sm rounded-3 px-3 py-1.5 d-inline-flex align-items-center gap-1"
+                                            style="font-size: 0.85rem;">
+                                            <i class="bi bi-pencil"></i> Editar
+                                        </a>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
@@ -164,10 +205,100 @@
 
     </div>
 
+    {{-- MODAL: MÉTODO DE PAGO --}}
+    <div class="modal fade" id="modalMetodoPago" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <form id="formMetodoPago" method="POST">
+                    @csrf
+                    <input type="hidden" name="estado" value="pagada">
+
+                    <div class="modal-header border-0 pt-4 px-4">
+                        <h5 class="fw-bold" style="color: #1a3352;">
+                            <i class="bi bi-credit-card me-2"></i>Método de Pago
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body px-4">
+                        <p class="text-muted small mb-3">Seleccioná el método de pago para esta orden:</p>
+
+                        <div class="d-flex flex-column gap-2">
+                            <label class="border rounded-3 p-3 d-flex align-items-center gap-3 cursor-pointer hover-shadow"
+                                style="cursor: pointer;">
+                                <input type="radio" name="metodo_pago" value="efectivo" class="form-check-input mt-0" checked>
+                                <div>
+                                    <span class="fw-semibold d-block">Efectivo</span>
+                                    <span class="text-muted small">Pago en efectivo al recibir</span>
+                                </div>
+                            </label>
+                            <label class="border rounded-3 p-3 d-flex align-items-center gap-3 cursor-pointer hover-shadow"
+                                style="cursor: pointer;">
+                                <input type="radio" name="metodo_pago" value="tarjeta" class="form-check-input mt-0">
+                                <div>
+                                    <span class="fw-semibold d-block">Tarjeta</span>
+                                    <span class="text-muted small">Débito o crédito</span>
+                                </div>
+                            </label>
+                            <label class="border rounded-3 p-3 d-flex align-items-center gap-3 cursor-pointer hover-shadow"
+                                style="cursor: pointer;">
+                                <input type="radio" name="metodo_pago" value="transferencia" class="form-check-input mt-0">
+                                <div>
+                                    <span class="fw-semibold d-block">Transferencia</span>
+                                    <span class="text-muted small">Transferencia bancaria / QR</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 px-4 pb-4">
+                        <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success rounded-3 fw-bold px-4">
+                            <i class="bi bi-check-lg me-1"></i> Confirmar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <style>
         .form-control:focus,
         .form-select:focus {
             box-shadow: none !important;
         }
+        .hover-shadow:hover {
+            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.08) !important;
+            border-color: #1a3352 !important;
+        }
     </style>
+
+    <script>
+        document.querySelectorAll('.select-cambio-estado').forEach(select => {
+            select.addEventListener('change', function() {
+                const form = this.form;
+
+                if (this.value === 'cancelada') {
+                    if (!confirm('¿Estás segura de cancelar esta orden? Se restaurará el stock.')) {
+                        this.value = this.options[0].value;
+                        return;
+                    }
+                    form.querySelector('input[name="metodo_pago"]').value = '';
+                    form.submit();
+                    return;
+                }
+
+                if (this.value === 'pagada') {
+                    const modal = document.getElementById('modalMetodoPago');
+                    const modalForm = document.getElementById('formMetodoPago');
+                    modalForm.action = form.action;
+                    modal.querySelector('input[name="metodo_pago"]:checked').checked = true;
+                    new bootstrap.Modal(modal).show();
+                    this.value = this.options[0].value;
+                    return;
+                }
+
+                form.querySelector('input[name="metodo_pago"]').value = '';
+                form.submit();
+            });
+        });
+    </script>
 @endsection

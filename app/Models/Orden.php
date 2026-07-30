@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Orden extends Model
 {
     protected $table = 'ordenes'; // Forzamos el plural correcto en español
-    protected $fillable = ['user_id', 'total', 'estado', 'origen', 'metodo_pago'];
+    protected $fillable = ['user_id', 'nombre_contacto', 'telefono_contacto', 'total', 'estado', 'origen', 'metodo_pago'];
 
     public function user()
     {
@@ -29,5 +29,38 @@ class Orden extends Model
     static public function cantidadVentasPorEstado($estado)
     {
         return self::where('estado', $estado)->count();
+    }
+
+    public function deducirStock()
+    {
+        foreach ($this->items as $item) {
+            $producto = $item->producto;
+            if (!$producto || !$item->talle) continue;
+
+            $talle = $producto->talles->where('nombre', $item->talle)->first();
+            if ($talle) {
+                $nuevoStock = max(0, $talle->pivot->stock - $item->cantidad);
+                $producto->talles()->updateExistingPivot($talle->id, ['stock' => $nuevoStock]);
+            }
+        }
+    }
+
+    public function restaurarStock()
+    {
+        foreach ($this->items as $item) {
+            $producto = $item->producto;
+            if (!$producto || !$item->talle) continue;
+
+            $talle = $producto->talles->where('nombre', $item->talle)->first();
+            if ($talle) {
+                $nuevoStock = $talle->pivot->stock + $item->cantidad;
+                $producto->talles()->updateExistingPivot($talle->id, ['stock' => $nuevoStock]);
+            }
+        }
+    }
+
+    public function esEstadoFinal()
+    {
+        return in_array($this->estado, ['entregada', 'cancelada']);
     }
 }

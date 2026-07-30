@@ -21,8 +21,20 @@ class CartController extends Controller
             return $carry + ($item['precio'] * $item['cantidad']);
         }, 0);
 
+        // 👇 Calculamos el total efectivo real con el % de c/producto
+        $totalEfectivo = array_reduce($cart, function ($carry, $item) use ($productosBD) {
+            $producto = $productosBD[$item['id']] ?? null;
+            $porcDesc = $producto ? (int) $producto->porc_desc_ef : 0;
+            $precioEf = $porcDesc > 0
+                ? $item['precio'] * (1 - $porcDesc / 100)
+                : $item['precio'];
+            return $carry + ($precioEf * $item['cantidad']);
+        }, 0);
+
+        $ahorro = $total - $totalEfectivo;
+
         // Pasamos $total a la vista
-        return view('carrito.index', compact('cart', 'productosBD', 'total'));
+        return view('carrito.index', compact('cart', 'productosBD', 'total', 'totalEfectivo', 'ahorro'));
     }
 
     // Agregar producto al carrito
@@ -41,8 +53,8 @@ class CartController extends Controller
             $cart[$cartKey] = [
                 'id' => $producto->id,
                 'nombre' => $producto->nombre,
-                'precio' => $producto->precio_oferta ?? $producto->precio, // si está en liquidación
-                'imagen' => $producto->imagen,
+                'precio' => $producto->precio_lista_actual,
+                'imagen' => $producto->url_imagen,
                 'talle' => $talle,
                 'cantidad' => (int) $request->input('cantidad', 1),
             ];

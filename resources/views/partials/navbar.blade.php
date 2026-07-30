@@ -16,9 +16,9 @@
                 <i class="bi bi-whatsapp"></i> 1153862451
             </a>
 
-            <!-- Atención al Cliente -->
-            <a href="#" class="text-white text-decoration-none d-flex align-items-center gap-1 hover-opacity">
-                <i class="bi bi-headset"></i> CONTACTANOS
+            <!-- Atención al Cliente / Consultas -->
+            <a href="{{ route('consultas.create') }}" class="text-white text-decoration-none d-flex align-items-center gap-1 hover-opacity">
+                <i class="bi bi-headset"></i> CONSULTAS
             </a>
 
         </div>
@@ -192,8 +192,8 @@
 
                         @if (Auth::user()->role !== 'admin')
                             <li>
-                                <a class="dropdown-item py-2" href="#">
-                                    <i class="bi bi-chat-left-text me-2"></i> Mis Consultas
+                                <a class="dropdown-item py-2" href="{{ route('pedidos.index') }}">
+                                    <i class="bi bi-box-seam me-2"></i> Mis Pedidos
                                 </a>
                             </li>
                         @endif

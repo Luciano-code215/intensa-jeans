@@ -37,12 +37,14 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
+            'telefono' => 'nullable|string|max:20',
         ]);
 
         $user = \App\Models\User::registrarUsuario(
             $validatedData['name'],
             $validatedData['email'],
-            $validatedData['password']
+            $validatedData['password'],
+            $validatedData['telefono']
         );
 
         // Iniciar sesión automáticamente después del registro

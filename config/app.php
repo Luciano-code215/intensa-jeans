@@ -118,6 +118,8 @@ return [
     |
     */
 
+    'whatsapp_owner' => env('WHATSAPP_OWNER', '543795016705'),
+
     'maintenance' => [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),

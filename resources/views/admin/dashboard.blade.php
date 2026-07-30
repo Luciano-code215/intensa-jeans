@@ -80,7 +80,7 @@
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
         <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
             <h5 class="fw-bold text-denim mb-0">Últimos Pedidos Recibidos</h5>
-            <a href="#" class="btn btn-link text-decoration-none btn-sm fw-semibold p-0" style="color: #d4af37;">Ver
+            <a href="{{ route('admin.ventas.index') }}" class="btn btn-link text-decoration-none btn-sm fw-semibold p-0" style="color: #d4af37;">Ver
                 todas</a>
         </div>
 
