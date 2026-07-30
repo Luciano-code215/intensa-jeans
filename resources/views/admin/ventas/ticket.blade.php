@@ -134,7 +134,8 @@
                         $totalItems += $item->subtotal;
                         $precioConDescuento = $item->precio_unitario;
                         $producto = $item->producto;
-                        $porcDesc = $producto ? (int) $producto->porc_desc_ef : 0;
+                        $aplicaDescEf = in_array($orden->metodo_pago, ['efectivo', 'transferencia']) && $producto;
+                        $porcDesc = $aplicaDescEf ? (int) $producto->porc_desc_ef : 0;
                         $precioEf = $porcDesc > 0 ? $item->precio_unitario * (1 - $porcDesc / 100) : $item->precio_unitario;
                         $descItem = ($item->precio_unitario - $precioEf) * $item->cantidad;
                         $totalDescuento += $descItem;
