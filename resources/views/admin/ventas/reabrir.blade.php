@@ -160,15 +160,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const productosData = @json($productos->map(fn($p) => [
-                'id' => $p->id,
-                'nombre' => $p->nombre,
-                'precio' => $p->precio_lista_actual,
-                'talles' => $p->talles->map(fn($t) => [
-                    'nombre' => $t->nombre,
-                    'stock' => (int) $t->pivot->stock,
-                ]),
-            ])->keyBy('id'));
+            const productosData = @json($productosData);
 
             let nextIndex = {{ count($orden->items) }};
 
@@ -179,7 +171,7 @@
                 const prod = productosData[productoId];
                 if (!prod) return '';
                 return prod.talles.map(t =>
-                    `<option value="${t.nombre}">Talle ${t.nombre} (stock ${t.stock})</option>`
+                    `<option value="${t.nombre}" ${t.stock > 0 ? '' : 'disabled'}>Talle ${t.nombre} (stock ${t.stock})</option>`
                 ).join('');
             }
 
@@ -189,16 +181,37 @@
                 ).join('');
             }
 
+            function stockDeLaFila(row) {
+                const selProducto = row.querySelector('.select-producto');
+                const selTalle = row.querySelector('.select-talle');
+                const prod = productosData[selProducto.value];
+                if (!prod || !selTalle.value) return 0;
+                const talle = prod.talles.find(t => t.nombre === selTalle.value);
+                return talle ? talle.stock : 0;
+            }
+
+            function aplicarLimiteStock(row) {
+                const input = row.querySelector('.input-cantidad');
+                const stock = stockDeLaFila(row);
+                input.max = stock;
+                if (stock > 0 && parseInt(input.value) > stock) {
+                    input.value = stock;
+                }
+                calcularSubtotales();
+            }
+
             function rellenarTalles(row) {
                 const selProducto = row.querySelector('.select-producto');
                 const selTalle = row.querySelector('.select-talle');
                 const tallePrev = selTalle.value;
                 selTalle.innerHTML = opcionesTalles(selProducto.value);
-                if (tallePrev) {
-                    const existe = [...selTalle.options].some(o => o.value === tallePrev);
-                    if (existe) selTalle.value = tallePrev;
+                const habilitado = [...selTalle.options].find(o => !o.disabled);
+                if (tallePrev && [...selTalle.options].some(o => o.value === tallePrev && !o.disabled)) {
+                    selTalle.value = tallePrev;
+                } else if (habilitado) {
+                    selTalle.value = habilitado.value;
                 }
-                calcularSubtotales();
+                aplicarLimiteStock(row);
             }
 
             function calcularSubtotales() {
@@ -254,12 +267,14 @@
             cuerpoItems.addEventListener('change', function(e) {
                 if (e.target.classList.contains('select-producto')) {
                     rellenarTalles(e.target.closest('.item-row'));
+                } else if (e.target.classList.contains('select-talle')) {
+                    aplicarLimiteStock(e.target.closest('.item-row'));
                 }
             });
 
             cuerpoItems.addEventListener('input', function(e) {
                 if (e.target.classList.contains('input-cantidad')) {
-                    calcularSubtotales();
+                    aplicarLimiteStock(e.target.closest('.item-row'));
                 }
             });
 

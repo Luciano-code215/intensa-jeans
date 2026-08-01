@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Setting;
 use Illuminate\Http\Request;
 
 class SettingsController extends Controller
@@ -14,37 +15,21 @@ class SettingsController extends Controller
     public function updateSocial(Request $request)
     {
         $request->validate([
-            'whatsapp' => 'required|string|max:30',
-            'instagram' => 'required|url|max:255',
-            'facebook' => 'required|url|max:255',
+            'whatsapp' => 'required|string|max:30|regex:/^[^\r\n]+$/',
+            'instagram' => 'required|url|max:255|regex:/^[^\r\n]+$/',
+            'facebook' => 'required|url|max:255|regex:/^[^\r\n]+$/',
         ]);
 
-        $envPath = base_path('.env');
-        if (!file_exists($envPath)) {
-            return back()->with('error', 'No se encontró el archivo .env.');
-        }
+        Setting::set('whatsapp_owner', $request->whatsapp);
+        Setting::set('instagram_url', $request->instagram);
+        Setting::set('facebook_url', $request->facebook);
 
-        $env = file_get_contents($envPath);
-
-        $reemplazos = [
-            'WHATSAPP_OWNER' => $request->whatsapp,
-            'INSTAGRAM_URL' => $request->instagram,
-            'FACEBOOK_URL' => $request->facebook,
-        ];
-
-        foreach ($reemplazos as $key => $value) {
-            $escaped = preg_match('/[#\s=]/', $value) ? '"' . $value . '"' : $value;
-            $pattern = "/^{$key}=.*/m";
-            if (preg_match($pattern, $env)) {
-                $env = preg_replace($pattern, "{$key}={$escaped}", $env);
-            } else {
-                $env .= "\n{$key}={$escaped}";
-            }
-        }
-
-        file_put_contents($envPath, $env);
-
-        \Illuminate\Support\Facades\Artisan::call('config:clear');
+        // Reflejamos los nuevos valores en config para la petición actual
+        config([
+            'app.whatsapp_owner' => $request->whatsapp,
+            'app.instagram_url' => $request->instagram,
+            'app.facebook_url' => $request->facebook,
+        ]);
 
         return back()->with('success', 'Redes sociales actualizadas correctamente.');
     }

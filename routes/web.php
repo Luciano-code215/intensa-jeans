@@ -16,7 +16,7 @@ Route::get('/productosPub/{id}', [ProductoController::class, 'show'])->name('pro
 
 // RUTAS DE LOGIN
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');//para ver la vista
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // RUTAS DE REGISTRO
@@ -109,10 +109,4 @@ Route::view('/quienes-somos', 'paginas.quienes-somos')->name('pagina.quienes-som
 Route::view('/como-comprar', 'paginas.como-comprar')->name('pagina.como-comprar');
 Route::view('/terminos', 'paginas.terminos')->name('pagina.terminos');
 
-Route::get('/test-php', function () {
-    phpinfo();
-});
 
-Route::get('/info.php', function () {
-    return view('info');
-});

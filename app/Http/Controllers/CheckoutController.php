@@ -102,6 +102,7 @@ class CheckoutController extends Controller
         $orden->deducirStock();
 
         session()->forget('cart');
+        session(['ultima_orden_id' => $orden->id]);
 
         return redirect()->route('checkout.confirmacion', $orden->id);
     }
@@ -109,6 +110,12 @@ class CheckoutController extends Controller
     public function confirmacion($id)
     {
         $orden = Orden::with('items.producto')->findOrFail($id);
+
+        // Solo el dueño de la orden puede ver su confirmación (evita enumerar pedidos ajenos)
+        $esDueno = auth()->check() && (int) $orden->user_id === (int) auth()->id();
+        if (!$esDueno && session('ultima_orden_id') !== (int) $orden->id) {
+            abort(404);
+        }
 
         $totalEfectivo = $orden->items->sum(function ($item) {
             return $item->subtotal_efectivo;
@@ -161,7 +168,7 @@ class CheckoutController extends Controller
             }
 
             if (!$producto->activo) {
-                $errores[] = "«{$producto->nombre}» ya no está disponible. Lo retiramos de la tienda.";
+                $errores[] = "«" . e($producto->nombre) . "» ya no está disponible. Lo retiramos de la tienda.";
                 continue;
             }
 
@@ -169,7 +176,7 @@ class CheckoutController extends Controller
             if ((float) $item['precio'] !== $precioActual) {
                 $cart[$key]['precio'] = $precioActual;
                 $preciosActualizados = true;
-                $errores[] = "El precio de «{$producto->nombre}» cambió: era \$" . number_format($item['precio'], 0, ',', '.') . " y ahora es \$" . number_format($precioActual, 0, ',', '.') . ". Actualizamos tu carrito con el nuevo precio.";
+                $errores[] = "El precio de «" . e($producto->nombre) . "» cambió: era \$" . number_format($item['precio'], 0, ',', '.') . " y ahora es \$" . number_format($precioActual, 0, ',', '.') . ". Actualizamos tu carrito con el nuevo precio.";
                 continue;
             }
 
@@ -179,7 +186,7 @@ class CheckoutController extends Controller
             $stockActual = $talle ? $producto->stockPorTalle($talle) : $producto->stockTotal();
 
             if ($item['cantidad'] > $stockActual) {
-                $errores[] = "«{$producto->nombre}» (" . ($talle ? "talle {$talle}" : 'sin talle') . "): pediste {$item['cantidad']}, disponible {$stockActual}.";
+                $errores[] = "«" . e($producto->nombre) . "» (" . ($talle ? "talle " . e($talle) : 'sin talle') . "): pediste " . (int) $item['cantidad'] . ", disponible " . $stockActual . ".";
             }
         }
 

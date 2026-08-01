@@ -30,6 +30,7 @@ class AuthController extends Controller
 
         if ($user) {
             // Iniciar sesión
+            $request->session()->regenerate();
             \Illuminate\Support\Facades\Auth::login($user);
 
             // Aviso de bienvenida según si ya inició sesión hoy
@@ -64,6 +65,7 @@ class AuthController extends Controller
         );
 
         // Iniciar sesión automáticamente después del registro
+        $request->session()->regenerate();
         \Illuminate\Support\Facades\Auth::login($user);
 
         return redirect('/') // Redirigir a la página deseada después del registro

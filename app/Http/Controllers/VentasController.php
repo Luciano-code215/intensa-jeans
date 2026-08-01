@@ -191,7 +191,17 @@ class VentasController extends Controller
             ->orderBy('nombre')
             ->get();
 
-        return view('admin.ventas.reabrir', compact('orden', 'productos'));
+        $productosData = $productos->map(fn($p) => [
+            'id' => $p->id,
+            'nombre' => $p->nombre,
+            'precio' => $p->precio_lista_actual,
+            'talles' => $p->talles->map(fn($t) => [
+                'nombre' => $t->nombre,
+                'stock' => (int) $t->pivot->stock,
+            ]),
+        ])->keyBy('id');
+
+        return view('admin.ventas.reabrir', compact('orden', 'productos', 'productosData'));
     }
 
     public function reabrir(Request $request, $id)
@@ -215,7 +225,7 @@ class VentasController extends Controller
             $producto = Producto::with('talles')->find($row['producto_id']);
             $stockDisponible = $producto->stockPorTalle($row['talle']);
             if ($row['cantidad'] > $stockDisponible) {
-                $erroresStock[] = "«{$producto->nombre}» talle {$row['talle']}: pediste {$row['cantidad']}, disponible {$stockDisponible}.";
+                $erroresStock[] = "«" . e($producto->nombre) . "» talle " . e($row['talle']) . ": pediste " . (int) $row['cantidad'] . ", disponible " . $stockDisponible . ".";
             }
         }
 
