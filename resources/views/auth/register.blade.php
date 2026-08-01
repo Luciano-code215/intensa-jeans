@@ -35,7 +35,7 @@
                             <label for="telefono" class="form-label small fw-semibold text-secondary">Teléfono</label>
                             <input type="tel" name="telefono" id="telefono"
                                 class="form-control rounded-3 py-2 @error('telefono') is-invalid @enderror"
-                                value="{{ old('telefono') }}" placeholder="+54 379 500-0000">
+                                value="{{ old('telefono') }}" placeholder="+54 379 500-0000" required>
                             @error('telefono')
                                 <span class="invalid-feedback small" role="alert">
                                     <strong>{{ $message }}</strong>

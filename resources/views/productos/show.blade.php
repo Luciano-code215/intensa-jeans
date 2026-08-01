@@ -147,6 +147,12 @@
 
                     {{-- FORMULARIO DE SELECCIÓN DE TALLE --}}
                     {{-- FORMULARIO DE SELECCIÓN DE TALLE Y AGREGAR AL CARRITO --}}
+                    @if (auth()->check() && auth()->user()->isAdmin())
+                        <div class="mt-4 p-4 bg-light rounded-4 text-center">
+                            <i class="bi bi-shield-lock fs-2 text-secondary d-block mb-2"></i>
+                            <p class="text-muted small mb-0">Vista de administrador — no podés agregar productos al carrito desde acá.</p>
+                        </div>
+                    @else
                     <form action="{{ route('carrito.add', $producto->id) }}" method="POST" class="mt-4">
                         @csrf
 
@@ -215,6 +221,7 @@
                             @endif
                         </div>
                     </form>
+                    @endif
                 </div>
             </div>
         </div>

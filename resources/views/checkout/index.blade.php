@@ -8,6 +8,13 @@
             </h2>
         </div>
 
+        @if (session('error_stock'))
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 border-0 shadow-sm mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> {!! session('error_stock') !!}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         <form action="{{ route('checkout.store') }}" method="POST">
             @csrf
 

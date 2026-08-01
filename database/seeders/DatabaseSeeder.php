@@ -5,16 +5,19 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        $this->call(TiendaSeeder::class);
+        User::create([
+            'name' => 'Administrador Intensa',
+            'email' => 'admin@intensa.com',
+            'password' => Hash::make('admin123'),
+            'role' => 'admin',
+        ]);
     }
 }

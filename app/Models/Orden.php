@@ -49,18 +49,28 @@ class Orden extends Model
     {
         foreach ($this->items as $item) {
             $producto = $item->producto;
-            if (!$producto || !$item->talle) continue;
+            if (!$producto) continue;
 
-            $talle = $producto->talles->where('nombre', $item->talle)->first();
-            if ($talle) {
-                $nuevoStock = $talle->pivot->stock + $item->cantidad;
-                $producto->talles()->updateExistingPivot($talle->id, ['stock' => $nuevoStock]);
+            if ($item->talle) {
+                $talle = $producto->talles->where('nombre', $item->talle)->first();
+                if ($talle) {
+                    $nuevoStock = $talle->pivot->stock + $item->cantidad;
+                    $producto->talles()->updateExistingPivot($talle->id, ['stock' => $nuevoStock]);
+                }
+            } else {
+                $restante = $item->cantidad;
+                foreach ($producto->talles as $talle) {
+                    if ($restante <= 0) break;
+                    $nuevoStock = $talle->pivot->stock + 1;
+                    $producto->talles()->updateExistingPivot($talle->id, ['stock' => $nuevoStock]);
+                    $restante--;
+                }
             }
         }
     }
 
     public function esEstadoFinal()
     {
-        return in_array($this->estado, ['entregada', 'cancelada']);
+        return in_array($this->estado, ['entregada', 'cancelada', 'devuelta']);
     }
 }

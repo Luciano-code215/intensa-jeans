@@ -24,16 +24,17 @@ Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('
 Route::post('/register', [AuthController::class, 'register']);
 
 
-//--------RUTAS DE USUARIO-----------------
-Route::middleware('auth')->group(function () {
+//--------RUTAS DE CARRITO (público)---------
+Route::prefix('carrito')->name('carrito.')->group(function () {
+    Route::get('/', [CartController::class, 'index'])->name('index');
+    Route::post('/agregar/{id}', [CartController::class, 'add'])->name('add');
+    Route::post('/actualizar/{id}', [CartController::class, 'update'])->name('update');
+    Route::post('/eliminar/{id}', [CartController::class, 'remove'])->name('remove');
+    Route::post('/vaciar', [CartController::class, 'clear'])->name('clear');
+});
 
-    Route::prefix('carrito')->name('carrito.')->group(function () {
-        Route::get('/', [CartController::class, 'index'])->name('index');
-        Route::post('/agregar/{id}', [CartController::class, 'add'])->name('add');
-        Route::post('/actualizar/{id}', [CartController::class, 'update'])->name('update');
-        Route::post('/eliminar/{id}', [CartController::class, 'remove'])->name('remove');
-        Route::post('/vaciar', [CartController::class, 'clear'])->name('clear');
-    });
+//--------RUTAS DE USUARIO (autenticado)---------
+Route::middleware('auth')->group(function () {
 
     Route::get('/consultas', [App\Http\Controllers\ConsultasController::class, 'create'])->name('consultas.create');
     Route::post('/consultas', [App\Http\Controllers\ConsultasController::class, 'store'])->name('consultas.store');
@@ -75,12 +76,18 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/admin/ventas/{id}/cambiar-estado', [App\Http\Controllers\VentasController::class, 'cambiarEstado'])->name('admin.ventas.cambiar-estado');
     Route::get('/admin/ventas/{id}/ticket', [App\Http\Controllers\VentasController::class, 'ticket'])->name('admin.ventas.ticket');
     Route::get('/admin/ventas/{id}/detalle', [App\Http\Controllers\VentasController::class, 'detalle'])->name('admin.ventas.detalle');
+    Route::post('/admin/ventas/{id}/devolver', [App\Http\Controllers\VentasController::class, 'devolver'])->name('admin.ventas.devolver');
+    Route::get('/admin/ventas/{id}/reabrir', [App\Http\Controllers\VentasController::class, 'reabrirForm'])->name('admin.ventas.reabrirForm');
+    Route::post('/admin/ventas/{id}/reabrir', [App\Http\Controllers\VentasController::class, 'reabrir'])->name('admin.ventas.reabrir');
 
     Route::get('/admin/consultas', [App\Http\Controllers\ConsultasController::class, 'index'])->name('admin.consultas.index');
     Route::post('/admin/consultas/{id}/leido', [App\Http\Controllers\ConsultasController::class, 'marcarLeido'])->name('admin.consultas.leido');
 
     Route::get('/admin/banner', [App\Http\Controllers\BannerController::class, 'edit'])->name('admin.banner');
     Route::post('/admin/banner', [App\Http\Controllers\BannerController::class, 'update'])->name('admin.banner.update');
+
+    Route::get('/admin/settings/social', [App\Http\Controllers\SettingsController::class, 'social'])->name('admin.settings.social');
+    Route::post('/admin/settings/social', [App\Http\Controllers\SettingsController::class, 'updateSocial'])->name('admin.settings.social.update');
 
     Route::get('/admin/productos/create', [ProductoController::class, 'create'])->name('admin.productos.create');
 

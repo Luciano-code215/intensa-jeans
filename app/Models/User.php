@@ -54,7 +54,7 @@ class User extends Authenticatable
     {
         $user = self::where('email', $email)->first();
 
-        if ($user && \Hash::check($password, $user->password)) {
+        if ($user && $user->activo && \Hash::check($password, $user->password)) {
             return $user;
         }
 

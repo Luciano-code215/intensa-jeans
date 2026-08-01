@@ -35,12 +35,12 @@
         <div class="col-6 col-xl-3">
             <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span class="text-muted small text-uppercase fw-bold tracking-wider">Pedidos Hoy</span>
+                    <span class="text-muted small text-uppercase fw-bold tracking-wider">Pedidos Pendientes</span>
                     <div class="bg-warning bg-opacity-10 text-warning rounded-3 p-2">
                         <i class="bi bi-bag-check fs-5"></i>
                     </div>
                 </div>
-                <h3 class="fw-bold mb-0" style="color: #1a3352;">{{ $pedidosHoy }}</h3>
+                <h3 class="fw-bold mb-0" style="color: #1a3352;">{{ $pedidosPendientes }}</h3>
                 <span class="small text-muted">{{ $pendientesEnvio }} pendientes de envío</span>
             </div>
         </div>

@@ -72,6 +72,11 @@ class Producto extends Model
         return $this->belongsToMany(Talle::class, 'producto_talles')->withPivot('stock');
     }
 
+    public function items()
+    {
+        return $this->hasMany(ItemOrden::class, 'producto_id');
+    }
+
     public function esNuevo()
     {
         // Consideramos "nuevo" si el producto fue creado en los últimos 7 días

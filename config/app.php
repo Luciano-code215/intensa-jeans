@@ -78,7 +78,7 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    'locale' => env('APP_LOCALE', 'es'),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
@@ -119,6 +119,8 @@ return [
     */
 
     'whatsapp_owner' => env('WHATSAPP_OWNER', '543795016705'),
+    'instagram_url' => env('INSTAGRAM_URL', 'https://instagram.com/intensa.ok'),
+    'facebook_url' => env('FACEBOOK_URL', 'https://facebook.com/intensa.ok'),
 
     'maintenance' => [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),

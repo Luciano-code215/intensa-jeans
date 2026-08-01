@@ -15,7 +15,7 @@ class ProductoController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Producto::with(['talles', 'categoria']);
+        $query = Producto::with(['talles', 'categoria'])->where('activo', true);
 
         // 1. Buscador por palabra clave (nombre o descripción)
         if ($request->filled('buscar')) {
@@ -63,8 +63,10 @@ class ProductoController extends Controller
 
         $productos = $query->get();
 
-        // Obtenemos las categorías que tengan al menos 1 producto
-        $categorias = Categoria::has('productos')->get();
+        // Obtenemos las categorías que tengan al menos 1 producto activo
+        $categorias = Categoria::whereHas('productos', function ($q) {
+            $q->where('activo', true);
+        })->get();
 
         return view('catalogo', compact('productos', 'categorias', 'esLiquidacion'));
     }
@@ -102,6 +104,13 @@ class ProductoController extends Controller
             $query->where('activo', false);
         }
 
+        // Filtro: Sin Stock
+        if ($request->boolean('sin_stock')) {
+            $query->whereDoesntHave('talles', function ($q) {
+                $q->where('stock', '>', 0);
+            });
+        }
+
         // Ordenación
         $ordenar = $request->input('ordenar', 'defecto');
         switch ($ordenar) {
@@ -110,6 +119,13 @@ class ProductoController extends Controller
                 break;
             case 'precio-mayor':
                 $query->orderBy('precio', 'desc');
+                break;
+            case 'mas-vendidos':
+                $query->withCount(['items as total_vendido' => function ($q) {
+                    $q->whereHas('orden', function ($q2) {
+                        $q2->where('estado', 'pagada');
+                    });
+                }])->orderBy('total_vendido', 'desc');
                 break;
             default:
                 $query->latest(); // Más nuevos primero
@@ -344,7 +360,12 @@ class ProductoController extends Controller
         // 1. Buscamos el producto pero le ordenamos que traiga también sus talles y sus fotos secundarias
         $producto = Producto::with(['talles', 'imagenesSecundarias'])->findOrFail($id);
 
-        // 2. Le enviamos toda esa información junta a la vista de detalles
+        // 2. Productos desactivados no se muestran públicamente
+        if (!$producto->activo) {
+            abort(404);
+        }
+
+        // 3. Le enviamos toda esa información junta a la vista de detalles
         return view('productos.show', compact('producto'));
     }
 

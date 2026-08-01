@@ -9,19 +9,19 @@
         <div class="d-none d-md-block w-100">
             <a href="#">
                 <img src="{{ asset('images/banner1.jpeg') }}?v={{ time() }}" alt="Gran Lanzamiento - Intensa Jeans"
-                    class="img-fluid w-100 h-auto" style="object-fit: cover;">
+                    class="img-fluid w-100 h-auto banner-img" style="object-fit: cover; min-height: 250px; background: #f0f0f0;">
             </a>
         </div>
 
         <div class="d-block d-md-none w-100">
             <a href="#">
                 <img src="{{ asset('images/banner1-mobile.jpg') }}?v={{ time() }}" alt="Promo Lanzamiento Jeans - Intensa"
-                    class="img-fluid w-100 h-auto">
+                    class="img-fluid w-100 h-auto banner-img" style="min-height: 200px; background: #f0f0f0; object-fit: cover;">
             </a>
         </div>
 
         @auth
-            @if (Auth::user()->admin ?? false)
+            @if (Auth::user()->isAdmin())
                 <a href="{{ route('admin.banner') }}"
                     class="position-absolute top-0 end-0 m-2 btn btn-sm btn-dark bg-opacity-75 rounded-3 px-3">
                     <i class="bi bi-pencil-square me-1"></i> Editar banner
@@ -193,6 +193,14 @@
     </section>
 
     {{-- ESTILOS ADICIONALES --}}
+    <script>
+        document.querySelectorAll('.banner-img').forEach(function (img) {
+            img.onerror = function () {
+                var a = this.closest('a');
+                if (a) a.innerHTML = '<div class="d-flex align-items-center justify-content-center bg-light text-muted" style="min-height:200px"><i class="bi bi-image fs-1 d-block"></i></div>';
+            };
+        });
+    </script>
     <style>
         .hover-elevate {
             transition: transform 0.3s ease, box-shadow 0.3s ease;

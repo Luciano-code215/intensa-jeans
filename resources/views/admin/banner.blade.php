@@ -2,7 +2,7 @@
 
 @section('title', 'Editar Banner')
 
-@section('content')
+@section('admin_content')
 <div class="py-4">
     <h2 class="fw-bold text-denim mb-1">
         <i class="bi bi-images me-2"></i>Editar Banner de Inicio
@@ -19,15 +19,15 @@
         <div class="col-md-6">
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
                 <div class="card-header bg-denim text-white fw-semibold small py-2">Banner actual (Desktop)</div>
-                <img src="{{ asset('images/banner1.jpeg') }}?v={{ time() }}" class="w-100 d-block" alt="Banner desktop"
-                    style="max-height: 300px; object-fit: cover;">
+                <img src="{{ asset('images/banner1.jpeg') }}?v={{ time() }}" class="w-100 d-block banner-img" alt="Banner desktop"
+                    style="max-height: 300px; object-fit: cover; background: #f0f0f0;">
             </div>
         </div>
         <div class="col-md-6">
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
                 <div class="card-header bg-secondary text-white fw-semibold small py-2">Banner actual (Mobile)</div>
-                <img src="{{ asset('images/banner1-mobile.jpg') }}?v={{ time() }}" class="w-100 d-block" alt="Banner mobile"
-                    style="max-height: 300px; object-fit: cover;">
+                <img src="{{ asset('images/banner1-mobile.jpg') }}?v={{ time() }}" class="w-100 d-block banner-img" alt="Banner mobile"
+                    style="max-height: 300px; object-fit: cover; background: #f0f0f0;">
             </div>
         </div>
     </div>
@@ -60,4 +60,19 @@
         </div>
     </form>
 </div>
+
+<script>
+    document.querySelectorAll('.banner-img').forEach(function (img) {
+        img.onerror = function () {
+            var card = this.closest('.card');
+            if (card) {
+                var msg = document.createElement('div');
+                msg.className = 'p-4 text-center text-muted small bg-light';
+                msg.innerHTML = '<i class="bi bi-image me-2"></i>Sin imagen aún. Subí una abajo.';
+                this.style.display = 'none';
+                card.appendChild(msg);
+            }
+        };
+    });
+</script>
 @endsection

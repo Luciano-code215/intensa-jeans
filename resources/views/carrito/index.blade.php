@@ -21,6 +21,20 @@
             </div>
         @endif
 
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if (session('error_stock'))
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> {!! session('error_stock') !!}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         @if (empty($cart) || count($cart) === 0)
             {{-- ESTADO: CARRITO VACÍO --}}
             <div class="text-center py-5 my-4 bg-light rounded-4 shadow-sm">
@@ -34,6 +48,12 @@
             </div>
         @else
             {{-- ESTADO: CARRITO CON PRODUCTOS --}}
+            @php
+                $tieneNoDisponible = collect($cart)->contains(function ($item) use ($productosBD) {
+                    $p = $productosBD[$item['id']] ?? null;
+                    return !$p || !$p->activo;
+                });
+            @endphp
             <div class="row g-4">
 
                 {{-- COLUMNA IZQUIERDA: LISTA DE PRODUCTOS --}}
@@ -53,13 +73,18 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($cart as $key => $item)
-                                        <tr>
+                                        @php
+                                            $productoBD = $productosBD[$item['id']] ?? null;
+                                            $noDisponible = !$productoBD || !$productoBD->activo;
+                                            $stockReal = $productoBD ? $productoBD->stockPorTalle($item['talle']) : 1;
+                                        @endphp
+                                        <tr class="{{ $noDisponible ? 'table-danger' : '' }}">
                                             {{-- Foto + Nombre --}}
                                             <td class="ps-4 py-3">
                                                 <div class="d-flex align-items-center gap-3">
                                                     <img src="{{ asset($item['imagen']) }}" alt="{{ $item['nombre'] }}"
                                                         class="rounded-3 object-fit-cover shadow-sm"
-                                                        style="width: 65px; height: 75px;">
+                                                        style="width: 65px; height: 75px; {{ $noDisponible ? 'opacity: 0.4;' : '' }}">
                                                     <div>
                                                         <h6 class="fw-bold mb-1 text-truncate"
                                                             style="max-width: 200px; color: #1a3352;">
@@ -67,6 +92,13 @@
                                                         </h6>
                                                         <span class="badge bg-light text-dark border">Ref:
                                                             {{ $item['id'] }}</span>
+                                                        @if ($noDisponible)
+                                                            <div class="mt-1">
+                                                                <span class="badge bg-danger text-white">
+                                                                    <i class="bi bi-x-circle me-1"></i>Ya no está disponible
+                                                                </span>
+                                                            </div>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </td>
@@ -83,27 +115,24 @@
 
                                             {{-- Cantidad (Formulario para actualizar con límite de Stock desde Modelo) --}}
                                             <td class="text-center" style="min-width: 140px;">
-                                                <form action="{{ route('carrito.update', $key) }}" method="POST"
-                                                    class="d-flex flex-column align-items-center justify-content-center gap-1">
-                                                    @csrf
+                                                @if ($noDisponible)
+                                                    <span class="text-danger small fw-semibold">No disponible</span>
+                                                @else
+                                                    <form action="{{ route('carrito.update', $key) }}" method="POST"
+                                                        class="d-flex flex-column align-items-center justify-content-center gap-1">
+                                                        @csrf
 
-                                                    @php
-                                                        $productoBD = $productosBD[$item['id']] ?? null;
-                                                        $stockReal = $productoBD
-                                                            ? $productoBD->stockPorTalle($item['talle'])
-                                                            : 1;
-                                                    @endphp
+                                                        <input type="number" name="cantidad" value="{{ $item['cantidad'] }}"
+                                                            min="1" max="{{ $stockReal }}"
+                                                            class="form-control form-control-sm text-center fw-bold rounded-2"
+                                                            style="width: 65px;" onchange="this.form.submit()"
+                                                            oninput="if(parseInt(this.value) > {{ $stockReal }}) this.value = {{ $stockReal }};">
 
-                                                    <input type="number" name="cantidad" value="{{ $item['cantidad'] }}"
-                                                        min="1" max="{{ $stockReal }}"
-                                                        class="form-control form-control-sm text-center fw-bold rounded-2"
-                                                        style="width: 65px;" onchange="this.form.submit()"
-                                                        oninput="if(parseInt(this.value) > {{ $stockReal }}) this.value = {{ $stockReal }};">
-
-                                                    <small class="text-muted" style="font-size: 0.75rem;">
-                                                        Disponibles: <strong>{{ $stockReal }}</strong>
-                                                    </small>
-                                                </form>
+                                                        <small class="text-muted" style="font-size: 0.75rem;">
+                                                            Disponibles: <strong>{{ $stockReal }}</strong>
+                                                        </small>
+                                                    </form>
+                                                @endif
                                             </td>
 
                                             {{-- Subtotal por ítem --}}
@@ -181,42 +210,24 @@
                                 style="color: #1a3352;">${{ number_format($total, 0, ',', '.') }}</span>
                         </div>
 
-                        {{-- OPCIÓN 1: Botón para Pedido Directo por WhatsApp --}}
-                        @php
-                            // Generar mensaje automático formateado para WhatsApp
-                            $mensaje = "Hola Intensa Jeans! ✨ Quisiera realizar el siguiente pedido:\n\n";
-                            foreach ($cart as $item) {
-                                $mensaje .=
-                                    '• ' .
-                                    $item['nombre'] .
-                                    ' (Talle ' .
-                                    $item['talle'] .
-                                    ') x' .
-                                    $item['cantidad'] .
-                                    " - $" .
-                                    number_format($item['precio'] * $item['cantidad'], 0, ',', '.') .
-                                    "\n";
-                            }
-                            $mensaje .= "\n*Total Lista:* $" . number_format($total, 0, ',', '.');
-                            $mensaje .= "\n*Total Efectivo:* $" . number_format($totalEfectivo, 0, ',', '.');
-                            if ($ahorro > 0) {
-                                $mensaje .= "\n*Ahorro:* $" . number_format($ahorro, 0, ',', '.');
-                            }
-
-                            $urlWhatsapp = 'https://wa.me/543795016705?text=' . urlencode($mensaje);
-                        @endphp
-
-                        <a href="{{ $urlWhatsapp }}" target="_blank"
-                            class="btn btn-success btn-lg w-100 py-3 fw-bold rounded-3 shadow-sm mb-2 text-uppercase d-flex align-items-center justify-content-center gap-2">
-                            <i class="bi bi-whatsapp fs-4"></i> Pedir por WhatsApp
-                        </a>
-
-                        {{-- OPCIÓN 2: Finalizar Compra (lleva al checkout) --}}
-                        <a href="{{ route('checkout.index') }}"
-                            class="btn btn-lg w-100 py-3 fw-bold rounded-3 text-white text-uppercase shadow-sm d-flex align-items-center justify-content-center gap-2"
-                            style="background-color: #1a3352;">
-                            <i class="bi bi-credit-card fs-5"></i> Finalizar Compra
-                        </a>
+                        @if ($tieneNoDisponible)
+                            <div class="alert alert-danger rounded-3 py-2 px-3 mb-3 small">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                Hay un producto que ya no está disponible. Eliminalo para continuar con la compra.
+                            </div>
+                            <button type="button" disabled
+                                class="btn btn-lg w-100 py-3 fw-bold rounded-3 text-white text-uppercase shadow-sm d-flex align-items-center justify-content-center gap-2"
+                                style="background-color: #1a3352; opacity: 0.5;">
+                                <i class="bi bi-credit-card fs-5"></i> Finalizar Compra
+                            </button>
+                        @else
+                            {{-- Finalizar Compra (lleva al checkout) --}}
+                            <a href="{{ route('checkout.index') }}"
+                                class="btn btn-lg w-100 py-3 fw-bold rounded-3 text-white text-uppercase shadow-sm d-flex align-items-center justify-content-center gap-2"
+                                style="background-color: #1a3352;">
+                                <i class="bi bi-credit-card fs-5"></i> Finalizar Compra
+                            </a>
+                        @endif
 
                     </div>
                 </div>

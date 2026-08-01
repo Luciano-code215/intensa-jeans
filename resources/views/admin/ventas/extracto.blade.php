@@ -113,10 +113,19 @@
             </tr>
         </thead>
         <tbody>
-            @php $granTotal = 0; @endphp
+            @php $granTotal = 0; $granTotalDesc = 0; @endphp
             @forelse ($ordenes as $orden)
                 @php
                     $productosStr = $orden->items->map(fn($i) => ($i->producto->sku ?? '—') . ' ' . $i->producto->nombre . ($i->talle ? ' (' . $i->talle . ')' : '') . ' x' . $i->cantidad)->implode('; ');
+                    $aplicaDesc = in_array($orden->metodo_pago, ['efectivo', 'transferencia']);
+                    $totalConDesc = 0;
+                    foreach ($orden->items as $item) {
+                        $precioBase = $item->precio_unitario;
+                        if ($aplicaDesc && $item->producto && $item->producto->porc_desc_ef > 0) {
+                            $precioBase = $item->precio_unitario * (1 - $item->producto->porc_desc_ef / 100);
+                        }
+                        $totalConDesc += $precioBase * $item->cantidad;
+                    }
                 @endphp
                 <tr>
                     <td class="num">#{{ $orden->id }}</td>
@@ -125,9 +134,16 @@
                     <td class="productos">{{ $productosStr }}</td>
                     <td><span class="estado-badge estado-{{ $orden->estado }}">{{ ucfirst($orden->estado) }}</span></td>
                     <td class="der">${{ number_format($orden->total, 0, ',', '.') }}</td>
-                    <td class="der fw-bold">${{ number_format($orden->total, 0, ',', '.') }}</td>
+                    <td class="der fw-bold">
+                        @if ($totalConDesc < $orden->total)
+                            <span style="color:#28a745;">${{ number_format($totalConDesc, 0, ',', '.') }}</span>
+                            <br><small style="text-decoration: line-through; color:#999;">${{ number_format($orden->total, 0, ',', '.') }}</small>
+                        @else
+                            ${{ number_format($orden->total, 0, ',', '.') }}
+                        @endif
+                    </td>
                 </tr>
-                @php $granTotal += $orden->total; @endphp
+                @php $granTotal += $orden->total; $granTotalDesc += $totalConDesc; @endphp
             @empty
                 <tr>
                     <td colspan="7" style="text-align:center;padding:30px;color:#999;">No hay órdenes activas.</td>
@@ -136,9 +152,15 @@
         </tbody>
         <tfoot>
             <tr>
-                <td colspan="6" class="total-general">TOTAL GENERAL</td>
+                <td colspan="6" class="total-general">TOTAL GENERAL (Lista)</td>
                 <td class="total-general">${{ number_format($granTotal, 0, ',', '.') }}</td>
             </tr>
+            @if ($granTotalDesc < $granTotal)
+            <tr>
+                <td colspan="6" class="total-general" style="color:#28a745; border-top: 1px solid #28a745;">TOTAL GENERAL (Efectivo/Transf.)</td>
+                <td class="total-general" style="color:#28a745; border-top: 1px solid #28a745;">${{ number_format($granTotalDesc, 0, ',', '.') }}</td>
+            </tr>
+            @endif
         </tfoot>
     </table>
 

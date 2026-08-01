@@ -160,11 +160,107 @@ class VentasController extends Controller
         return back()->with('success', $mensajes[$nuevo] ?? 'Estado actualizado.');
     }
 
+    // ---- DEVOLUCIÓN / REAPERTURA DE VENTA ----
+
+    public function devolver($id)
+    {
+        $orden = Orden::with('items.producto.talles')->findOrFail($id);
+
+        if (!in_array($orden->estado, ['pagada', 'entregada'])) {
+            return back()->with('error', 'Solo se puede devolver una orden pagada o entregada.');
+        }
+
+        $orden->restaurarStock();
+        $orden->update(['estado' => 'devuelta']);
+
+        return redirect()->route('admin.ventas.reabrirForm', $orden->id)
+            ->with('success', 'Devolución registrada y stock restaurado. Ahora podés volver a armar la venta o dejarla devuelta.');
+    }
+
+    public function reabrirForm($id)
+    {
+        $orden = Orden::with('items.producto.talles', 'user')->findOrFail($id);
+
+        if ($orden->estado !== 'devuelta') {
+            return back()->with('error', 'Esta orden no está en devolución.');
+        }
+
+        $productos = Producto::with('talles')
+            ->where('activo', true)
+            ->orWhereIn('id', $orden->items->pluck('producto_id'))
+            ->orderBy('nombre')
+            ->get();
+
+        return view('admin.ventas.reabrir', compact('orden', 'productos'));
+    }
+
+    public function reabrir(Request $request, $id)
+    {
+        $orden = Orden::with('items.producto.talles')->findOrFail($id);
+
+        if ($orden->estado !== 'devuelta') {
+            return back()->with('error', 'Esta orden no está en devolución.');
+        }
+
+        $request->validate([
+            'metodo_pago' => 'required|in:efectivo,tarjeta,tarjeta_debito,tarjeta_credito,transferencia',
+            'items' => 'required|array|min:1',
+            'items.*.producto_id' => 'required|exists:productos,id',
+            'items.*.talle' => 'required|string|max:255',
+            'items.*.cantidad' => 'required|integer|min:1',
+        ]);
+
+        $erroresStock = [];
+        foreach ($request->items as $row) {
+            $producto = Producto::with('talles')->find($row['producto_id']);
+            $stockDisponible = $producto->stockPorTalle($row['talle']);
+            if ($row['cantidad'] > $stockDisponible) {
+                $erroresStock[] = "«{$producto->nombre}» talle {$row['talle']}: pediste {$row['cantidad']}, disponible {$stockDisponible}.";
+            }
+        }
+
+        if (!empty($erroresStock)) {
+            return back()->withInput()->withErrors(['items' => 'No hay stock suficiente: ' . implode(' ', $erroresStock)]);
+        }
+
+        // Reconstruimos los ítems (el stock ya fue restaurado en la devolución)
+        ItemOrden::where('orden_id', $orden->id)->delete();
+
+        $total = 0;
+        foreach ($request->items as $row) {
+            $producto = Producto::find($row['producto_id']);
+            $precio = $producto->precio_lista_actual;
+
+            ItemOrden::create([
+                'orden_id' => $orden->id,
+                'producto_id' => $producto->id,
+                'talle' => $row['talle'],
+                'cantidad' => $row['cantidad'],
+                'precio_unitario' => $precio,
+                'subtotal' => $precio * $row['cantidad'],
+            ]);
+
+            $total += $precio * $row['cantidad'];
+        }
+
+        $orden->update([
+            'estado' => 'pagada',
+            'total' => $total,
+            'metodo_pago' => $request->metodo_pago,
+        ]);
+
+        $orden->load('items.producto.talles');
+        $orden->deducirStock();
+
+        return redirect()->route('admin.ventas.detalle', $orden->id)
+            ->with('success', "Venta #{$orden->id} reabierta como pagada. Podés emitir el ticket si lo necesitás.");
+    }
+
     // ---- EXTRACTO ----
 
     public function extracto(Request $request)
     {
-        $ordenes = Orden::with('items.producto', 'user')->whereNotIn('estado', ['entregada', 'cancelada']);
+        $ordenes = Orden::with('items.producto', 'user')->whereNotIn('estado', ['entregada', 'cancelada', 'devuelta']);
 
         if ($request->filled('estado')) {
             $ordenes->where('estado', $request->estado);

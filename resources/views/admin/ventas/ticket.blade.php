@@ -144,6 +144,7 @@
                         <td class="cant">{{ $item->cantidad }}</td>
                         <td class="desc">
                             {{ $item->producto->nombre ?? 'Producto' }}
+                            <br><small style="color:#888;">SKU: {{ $item->producto->sku ?? 'S/N' }}</small>
                             @if ($item->talle)
                                 <br><small style="color:#888;">Talle: {{ $item->talle }}</small>
                             @endif

@@ -46,7 +46,7 @@
                     <div>
                         <span class="text-uppercase fw-bold tracking-wider lh-1"
                             style="font-size: 0.8rem; letter-spacing: 0.5px;">Pendientes de Envío</span>
-                        <h1 class="fw-bold my-1 display-5 lh-1">{{ \App\Models\Orden::cantidadVentasPorEstado('creada') }}
+                        <h1 class="fw-bold my-1 display-5 lh-1">{{ \App\Models\Orden::cantidadVentasPorEstado('pagada') }}
                         </h1>
                     </div>
                     <p class="small mb-0 opacity-75 fw-medium" style="font-size: 0.85rem; max-width: 80%;">Paquetes por
@@ -76,6 +76,8 @@
                             <option value="entregada" {{ request('estado') == 'entregada' ? 'selected' : '' }}>Entregada
                             </option>
                             <option value="cancelada" {{ request('estado') == 'cancelada' ? 'selected' : '' }}>Cancelada
+                            </option>
+                            <option value="devuelta" {{ request('estado') == 'devuelta' ? 'selected' : '' }}>Devuelta
                             </option>
                         </select>
                     </div>
@@ -107,8 +109,8 @@
 
                             {{-- Botón opcional para limpiar filtros si hay alguno activo --}}
                             @if (request()->hasAny(['estado', 'fecha_inicio', 'fecha_fin', 'buscar']))
-                                <a href="{{ route('admin.ventas.index') }}" class="btn btn-outline-secondary rounded-3 ms-1"
-                                    title="Limpiar Filtros">
+                                <a href="{{ route('admin.ventas.index') }}"
+                                    class="btn btn-outline-secondary rounded-3 ms-1" title="Limpiar Filtros">
                                     <i class="bi bi-x-circle"></i>
                                 </a>
                             @endif
@@ -152,29 +154,36 @@
                             <tr class="border-bottom border-light">
                                 <td class="fw-bold text-dark">#{{ $venta->id }}</td>
                                 <td class="text-capitalize text-secondary">
-                                    {{ optional($venta->user)->name ?? $venta->nombre_contacto ?? 'N/A' }}</td>
+                                    {{ optional($venta->user)->name ?? ($venta->nombre_contacto ?? 'N/A') }}</td>
                                 <td class="text-muted">
                                     {{ $venta->created_at ? $venta->created_at->format('d/m/Y H:i') : '-' }}</td>
                                 <td class="fw-bold text-dark">${{ number_format($venta->total, 0, ',', '.') }}</td>
                                 <td>
-                                    @php $esFinal = in_array($venta->estado, ['entregada', 'cancelada']); @endphp
+                                    @php $esFinal = in_array($venta->estado, ['entregada', 'cancelada', 'devuelta']); @endphp
                                     @if ($esFinal)
-                                        <span class="badge rounded-pill px-3 py-2
-                                            {{ $venta->estado === 'entregada' ? 'bg-success' : 'bg-danger' }}">
+                                        <span
+                                            class="badge rounded-pill px-3 py-2
+                                            {{ $venta->estado === 'entregada' ? 'bg-success' : ($venta->estado === 'cancelada' ? 'bg-danger' : 'bg-dark') }}">
                                             {{ ucfirst($venta->estado) }}
                                         </span>
                                     @else
-                                        <form action="{{ route('admin.ventas.cambiar-estado', $venta->id) }}" method="POST"
-                                            class="d-inline cambio-estado-form">
+                                        <form action="{{ route('admin.ventas.cambiar-estado', $venta->id) }}"
+                                            method="POST" class="d-inline cambio-estado-form">
                                             @csrf
                                             <input type="hidden" name="metodo_pago" value="">
                                             <select name="estado"
                                                 class="form-select form-select-sm rounded-3 fw-medium bg-light bg-opacity-70 text-dark border-0 py-1.5 px-3 select-cambio-estado"
                                                 data-orden-id="{{ $venta->id }}">
-                                                <option value="creada" {{ $venta->estado === 'creada' ? 'selected' : '' }}>Creada</option>
-                                                <option value="pagada" {{ $venta->estado === 'pagada' ? 'selected' : '' }}>Pagada</option>
-                                                <option value="entregada" {{ $venta->estado === 'entregada' ? 'selected' : '' }}>Entregada</option>
-                                                <option value="cancelada" {{ $venta->estado === 'cancelada' ? 'selected' : '' }}>Cancelada</option>
+                                                <option value="creada"
+                                                    {{ $venta->estado === 'creada' ? 'selected' : '' }}>Creada</option>
+                                                <option value="pagada"
+                                                    {{ $venta->estado === 'pagada' ? 'selected' : '' }}>Pagada</option>
+                                                <option value="entregada"
+                                                    {{ $venta->estado === 'entregada' ? 'selected' : '' }}>Entregada
+                                                </option>
+                                                <option value="cancelada"
+                                                    {{ $venta->estado === 'cancelada' ? 'selected' : '' }}>Cancelada
+                                                </option>
                                             </select>
                                         </form>
                                     @endif
@@ -185,11 +194,26 @@
                                         style="font-size: 0.85rem;">
                                         <i class="bi bi-eye"></i> Detalle
                                     </a>
-                                    @if ($venta->estado === 'pagada')
-                                        <a href="{{ route('admin.ventas.ticket', $venta->id) }}"
+                                    @if (in_array($venta->estado, ['pagada', 'entregada']))
+                                        <a href="{{ route('admin.ventas.ticket', $venta->id) }}" target="_blank"
                                             class="btn btn-outline-secondary btn-sm rounded-3 px-3 py-1.5 d-inline-flex align-items-center gap-1"
                                             style="font-size: 0.85rem;">
                                             <i class="bi bi-receipt"></i> Ticket
+                                        </a>
+                                        <form action="{{ route('admin.ventas.devolver', $venta->id) }}" method="POST"
+                                            class="d-inline form-devolver">
+                                            @csrf
+                                            <button type="submit"
+                                                class="btn btn-outline-danger btn-sm rounded-3 px-3 py-1.5 d-inline-flex align-items-center gap-1"
+                                                style="font-size: 0.85rem;">
+                                                <i class="bi bi-arrow-counterclockwise"></i> Devolución
+                                            </button>
+                                        </form>
+                                    @elseif ($venta->estado === 'devuelta')
+                                        <a href="{{ route('admin.ventas.reabrirForm', $venta->id) }}"
+                                            class="btn btn-outline-success btn-sm rounded-3 px-3 py-1.5 d-inline-flex align-items-center gap-1"
+                                            style="font-size: 0.85rem;">
+                                            <i class="bi bi-cart-plus"></i> Reabrir venta
                                         </a>
                                     @endif
                                 </td>
@@ -229,7 +253,8 @@
                         <div class="d-flex flex-column gap-2">
                             <label class="border rounded-3 p-3 d-flex align-items-center gap-3 cursor-pointer hover-shadow"
                                 style="cursor: pointer;">
-                                <input type="radio" name="metodo_pago" value="efectivo" class="form-check-input mt-0" checked>
+                                <input type="radio" name="metodo_pago" value="efectivo" class="form-check-input mt-0"
+                                    checked>
                                 <div>
                                     <span class="fw-semibold d-block">Efectivo</span>
                                     <span class="text-muted small">Pago en efectivo al recibir</span>
@@ -245,7 +270,8 @@
                             </label>
                             <label class="border rounded-3 p-3 d-flex align-items-center gap-3 cursor-pointer hover-shadow"
                                 style="cursor: pointer;">
-                                <input type="radio" name="metodo_pago" value="transferencia" class="form-check-input mt-0">
+                                <input type="radio" name="metodo_pago" value="transferencia"
+                                    class="form-check-input mt-0">
                                 <div>
                                     <span class="fw-semibold d-block">Transferencia</span>
                                     <span class="text-muted small">Transferencia bancaria / QR</span>
@@ -254,7 +280,8 @@
                         </div>
                     </div>
                     <div class="modal-footer border-0 px-4 pb-4">
-                        <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-outline-secondary rounded-3"
+                            data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-success rounded-3 fw-bold px-4">
                             <i class="bi bi-check-lg me-1"></i> Confirmar
                         </button>
@@ -269,8 +296,9 @@
         .form-select:focus {
             box-shadow: none !important;
         }
+
         .hover-shadow:hover {
-            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.08) !important;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.08) !important;
             border-color: #1a3352 !important;
         }
     </style>
@@ -302,6 +330,16 @@
 
                 form.querySelector('input[name="metodo_pago"]').value = '';
                 form.submit();
+            });
+        });
+
+        document.querySelectorAll('.form-devolver').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const msg = '¿Registrar devolución de esta venta?\n\nSe revertirá el ingreso y se restablecerá el stock de los productos.\nDespués podés volver a armar la venta con los productos que quieras.';
+                if (confirm(msg)) {
+                    this.submit();
+                }
             });
         });
     </script>

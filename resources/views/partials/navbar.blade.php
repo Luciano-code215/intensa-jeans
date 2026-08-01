@@ -11,7 +11,7 @@
             </span>
 
             <!-- WhatsApp -->
-            <a href="https://wa.me/543795016705" target="_blank"
+            <a href="https://wa.me/{{ config('app.whatsapp_owner') }}" target="_blank"
                 class="text-white text-decoration-none d-flex align-items-center gap-1 hover-opacity">
                 <i class="bi bi-whatsapp"></i> WHATSAPP
             </a>

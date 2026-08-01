@@ -40,15 +40,28 @@ class CartController extends Controller
     // Agregar producto al carrito
     public function add(Request $request, $id)
     {
+        if (auth()->check() && auth()->user()->isAdmin()) {
+            return back()->with('error', 'Los administradores no pueden agregar productos al carrito.');
+        }
+
         $producto = Producto::findOrFail($id);
         $cart = session()->get('cart', []);
 
-        // Generar una clave única (por si luego manejas Talles/Variantes)
         $talle = $request->input('talle', 'Único');
         $cartKey = $id . '_' . $talle;
+        $cantSolicitada = (int) $request->input('cantidad', 1);
+
+        $stockTalle = $producto->stockPorTalle($talle);
+        $cantEnCarrito = $cart[$cartKey]['cantidad'] ?? 0;
+        $totalSolicitada = $cantEnCarrito + $cantSolicitada;
+
+        if ($totalSolicitada > $stockTalle) {
+            $disponible = max(0, $stockTalle - $cantEnCarrito);
+            return back()->with('error', "Solo hay {$stockTalle} unidades disponibles de «{$producto->nombre}» (talle {$talle}). Podés agregar hasta {$disponible} más.");
+        }
 
         if (isset($cart[$cartKey])) {
-            $cart[$cartKey]['cantidad'] += $request->input('cantidad', 1);
+            $cart[$cartKey]['cantidad'] = $totalSolicitada;
         } else {
             $cart[$cartKey] = [
                 'id' => $producto->id,
@@ -56,7 +69,7 @@ class CartController extends Controller
                 'precio' => $producto->precio_lista_actual,
                 'imagen' => $producto->url_imagen,
                 'talle' => $talle,
-                'cantidad' => (int) $request->input('cantidad', 1),
+                'cantidad' => $cantSolicitada,
             ];
         }
 

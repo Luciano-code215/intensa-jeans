@@ -108,6 +108,12 @@
                         <i class="bi bi-images"></i> Banner
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white hover-sidebar rounded-3 py-1.5 px-3 d-flex align-items-center gap-2 small {{ Request::is('admin/settings/social') ? 'bg-white bg-opacity-10 text-white' : 'text-white-50' }}"
+                        href="{{ route('admin.settings.social') }}" onclick="cerrarOffcanvas()">
+                        <i class="bi bi-share"></i> Redes Sociales
+                    </a>
+                </li>
                 <li class="nav-item mt-3">
                     <a class="nav-link text-white-50 hover-sidebar rounded-3 py-1.5 px-3 d-flex align-items-center gap-2 small"
                         href="{{ url('/') }}" onclick="cerrarOffcanvas()">
@@ -184,6 +190,12 @@
                             <i class="bi bi-images"></i> Banner
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white hover-sidebar rounded-3 py-2.5 px-3 d-flex align-items-center gap-2 {{ Request::is('admin/settings/social') ? 'bg-white bg-opacity-10 text-white' : 'text-white-50' }}"
+                            href="{{ route('admin.settings.social') }}">
+                            <i class="bi bi-share"></i> Redes Sociales
+                        </a>
+                    </li>
                     <li class="nav-item mt-4">
                         <a class="nav-link text-white-50 hover-sidebar rounded-3 py-2 px-3 d-flex align-items-center gap-2 small"
                             href="{{ url('/') }}">
@@ -208,6 +220,7 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-9 col-lg-10 offset-md-3 offset-lg-2 p-3 p-md-5">
+                @include('partials.login-msg')
                 @yield('admin_content')
             </div>
         </div>

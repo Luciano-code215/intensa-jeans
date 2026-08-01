@@ -68,6 +68,7 @@
 <body>
 
     @include('partials.navbar')
+    @include('partials.login-msg')
     @if (session('agregado_carrito'))
         <div class="container mt-3">
             <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm" role="alert">
@@ -106,9 +107,9 @@
                 <div class="col-md-4 text-center text-md-end">
                     <h6 class="fw-bold text-uppercase small mb-3 tracking-wider text-white-50">Seguinos</h6>
                     <div class="d-flex justify-content-center justify-content-md-end gap-3 fs-4 mb-3">
-                        <a href="https://instagram.com/intensa.ok" target="_blank" class="text-white-50 text-decoration-none"><i class="bi bi-instagram"></i></a>
-                        <a href="https://wa.me/543795016705" target="_blank" class="text-white-50 text-decoration-none"><i class="bi bi-whatsapp"></i></a>
-                        <a href="https://facebook.com/intensa.ok" target="_blank" class="text-white-50 text-decoration-none"><i class="bi bi-facebook"></i></a>
+                        <a href="{{ config('app.instagram_url') }}" target="_blank" class="text-white-50 text-decoration-none"><i class="bi bi-instagram"></i></a>
+                        <a href="https://wa.me/{{ config('app.whatsapp_owner') }}" target="_blank" class="text-white-50 text-decoration-none"><i class="bi bi-whatsapp"></i></a>
+                        <a href="{{ config('app.facebook_url') }}" target="_blank" class="text-white-50 text-decoration-none"><i class="bi bi-facebook"></i></a>
                     </div>
                     <p class="small text-white-50 mb-0">
                         <i class="bi bi-geo-alt me-1"></i> Corrientes, Argentina
@@ -124,7 +125,7 @@
                     &copy; {{ date('Y') }} Intensa Jeans. Todos los derechos reservados.
                 </p>
                 <p class="small text-white-50 mb-0">
-                    Desarrollado con ❤️ por <a href="#" class="text-white-50 text-decoration-none" title="Contactar desarrollador">Lucía</a>
+                    Desarrollado con ❤️ por <a href="https://wa.me/5493795101613" target="_blank" class="text-white-50 text-decoration-none" title="Contactar desarrollador">Luciano</a>
                 </p>
             </div>
         </div>

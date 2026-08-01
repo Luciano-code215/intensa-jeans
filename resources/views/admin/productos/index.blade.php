@@ -69,7 +69,17 @@
                     </select>
                 </div>
 
-                <div class="col-12 col-sm-6 col-md-2 col-lg-3 ms-auto">
+                <div class="col-12 col-sm-6 col-md-2 col-lg-2">
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" name="sin_stock" id="sin_stock" value="1"
+                            {{ request('sin_stock') ? 'checked' : '' }} onchange="this.form.submit()">
+                        <label class="form-check-label small fw-medium text-muted" for="sin_stock">
+                            <i class="bi bi-exclamation-triangle text-warning me-1"></i>Sin Stock
+                        </label>
+                    </div>
+                </div>
+
+                <div class="col-12 col-sm-6 col-md-2 col-lg-2 ms-auto">
                     <select class="form-select rounded-3 py-2 text-primary fw-medium bg-white" name="ordenar"
                         style="border-color: #0d6efd !important;" onchange="this.form.submit()">
                         <option value="defecto" {{ request('ordenar', 'defecto') == 'defecto' ? 'selected' : '' }}>Ordenar
@@ -78,6 +88,8 @@
                             Menor a Mayor</option>
                         <option value="precio-mayor" {{ request('ordenar') == 'precio-mayor' ? 'selected' : '' }}>Precio:
                             Mayor a Menor</option>
+                        <option value="mas-vendidos" {{ request('ordenar') == 'mas-vendidos' ? 'selected' : '' }}>Más
+                            Vendidos</option>
                     </select>
                 </div>
             </form>

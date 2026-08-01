@@ -24,8 +24,8 @@ class DashboardController extends Controller
 
         $pctVentas = $ventasMesAnterior > 0 ? round(($ventasMes - $ventasMesAnterior) / $ventasMesAnterior * 100, 1) : 0;
 
-        $pedidosHoy = Orden::whereDate('created_at', today())->count();
-        $pendientesEnvio = Orden::where('estado', 'creada')->count();
+        $pedidosPendientes = Orden::where('estado', 'creada')->count();
+        $pendientesEnvio = Orden::where('estado', 'pagada')->count();
         $prendasActivas = Producto::where('activo', true)->count();
         $sinStock = Producto::where('activo', true)->get()->filter(fn($p) => $p->stock <= 0)->count();
         $consultasPendientes = Consulta::where('estado', 'pendiente')->count();
@@ -34,7 +34,7 @@ class DashboardController extends Controller
         $ultimasOrdenes = Orden::with('user')->latest()->take(5)->get();
 
         return view('admin.dashboard', compact(
-            'ventasMes', 'pctVentas', 'pedidosHoy', 'pendientesEnvio',
+            'ventasMes', 'pctVentas', 'pedidosPendientes', 'pendientesEnvio',
             'prendasActivas', 'sinStock', 'consultasPendientes',
             'usuariosRegistrados', 'ultimasOrdenes'
         ));

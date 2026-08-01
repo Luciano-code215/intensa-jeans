@@ -37,6 +37,7 @@
                                             'pagada' => ['bg-info text-white', 'Pagada'],
                                             'entregada' => ['bg-success text-white', 'Entregada'],
                                             'cancelada' => ['bg-danger text-white', 'Cancelada'],
+                                            'devuelta' => ['bg-dark text-white', 'Devuelta'],
                                         ];
                                         $badge = $badges[$pedido->estado] ?? ['bg-secondary text-white', ucfirst($pedido->estado)];
                                     @endphp
@@ -67,11 +68,32 @@
                                     </table>
                                 </div>
                             </div>
+                            @php
+                                $aplicaDesc = in_array($pedido->metodo_pago, ['efectivo', 'transferencia']) && $pedido->estado === 'pagada';
+                                $totalPagado = $pedido->total;
+                                if ($aplicaDesc) {
+                                    $totalPagado = $pedido->items->sum(function ($item) {
+                                        $porcDesc = $item->producto ? (int) $item->producto->porc_desc_ef : 0;
+                                        $precioEf = $porcDesc > 0 ? $item->precio_unitario * (1 - $porcDesc / 100) : $item->precio_unitario;
+                                        return $precioEf * $item->cantidad;
+                                    });
+                                }
+                            @endphp
                             <div class="card-footer bg-light border-top px-4 py-3 d-flex justify-content-between align-items-center">
                                 <span class="text-muted small">{{ $pedido->items->count() }} prenda(s)</span>
-                                <span class="fw-bold fs-5" style="color: #1a3352;">
-                                    Total: ${{ number_format($pedido->total, 0, ',', '.') }}
-                                </span>
+                                <div class="text-end">
+                                    @if ($aplicaDesc)
+                                        <span class="text-muted text-decoration-line-through small d-block">${{ number_format($pedido->total, 0, ',', '.') }}</span>
+                                        <span class="fw-bold fs-5 text-success">
+                                            Pagado: ${{ number_format($totalPagado, 0, ',', '.') }}
+                                        </span>
+                                        <span class="badge bg-success ms-1">Desc. efectivo/transf.</span>
+                                    @else
+                                        <span class="fw-bold fs-5" style="color: #1a3352;">
+                                            Total: ${{ number_format($pedido->total, 0, ',', '.') }}
+                                        </span>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </div>
